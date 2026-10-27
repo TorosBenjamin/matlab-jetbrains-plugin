@@ -77,6 +77,8 @@ class MatlabAnnotator : Annotator {
             is MatlabParameter -> return if (isObjectReference(parent)) OBJECT_REFERENCE else PARAMETER
             is MatlabRetValue -> return if (isObjectReference(parent)) OBJECT_REFERENCE else ID
             is MatlabRefExpr -> {
+                // `end` inside indexing (x(end), x(end-1)) is parsed as a name but is the keyword.
+                if (identifier.text == "end" && memberColor(parent) == null) return KEYWORD
                 positionColor(parent)?.let { return it }
                 // Uses: decided by what the name resolves to.
                 memberColor(parent)?.let { return it }

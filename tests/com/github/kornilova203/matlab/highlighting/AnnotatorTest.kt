@@ -109,4 +109,16 @@ class AnnotatorTest : BasePlatformTestCase() {
     /** obj.describe without parentheses is a method call, found by looking up describe in the class. */
     fun testMethodCalledWithoutParentheses() = assertEquals(
         listOf("describe"), coloredWith(classBody, MatlabAnnotator.METHOD_CALL))
+
+    /** `end` inside indexing is parsed as a name but is still the keyword. A field named end is not. */
+    fun testEndAsIndexIsKeyword() = assertEquals(
+        listOf("end", "end", "end"),
+        coloredWith("z = 1:10;\nlast = z(end);\nmid = z(end/2:end-1);\ns.end = 1;\n", MatlabAnnotator.KEYWORD)
+            .take(3)
+    )
+
+    fun testEndAsIndexIsNotIdentifier() = assertEquals(
+        emptyList<String>(),
+        coloredWith("z = 1:10;\nlast = z(end);\n", MatlabAnnotator.ID).filter { it == "end" }
+    )
 }
