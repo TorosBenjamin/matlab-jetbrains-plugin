@@ -33,4 +33,31 @@ class UsagesCodeVisionTest : BasePlatformTestCase() {
         assertEquals("2 usages", hintFor("Width"))
         assertEquals("no usages", hintFor("unused"))
     }
+
+    /** Hint texts the editor would show, by line. */
+    private fun hintsByLine(code: String): Map<Int, String> {
+        myFixture.configureByText("test.m", code)
+        val doc = myFixture.editor.document
+        return MatlabUsagesCodeVisionProvider().computeForEditor(myFixture.editor, myFixture.file)
+            .associate { (range, entry) -> doc.getLineNumber(range.startOffset) + 1 to entry.longPresentation }
+    }
+
+    fun testNestedAndLocalFunctionsGetHints() {
+        val hints = hintsByLine("""
+            function r = nested_outer(n)
+                base = 10;
+                r = inner(n);
+                function out = inner(m)
+                    out = base + m;
+                end
+            end
+            """.trimIndent())
+        assertEquals(hints.toString(), setOf(1, 4), hints.keys)
+        assertEquals("1 usage", hints[4])
+    }
+
+    fun testMethodsGetHints() {
+        val hints = hintsByLine("classdef C\n    methods\n        function a(obj)\n        end\n    end\nend\n")
+        assertTrue(hints.toString(), hints.containsKey(1) && hints.containsKey(3))
+    }
 }
