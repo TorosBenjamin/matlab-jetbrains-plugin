@@ -32,6 +32,9 @@ abstract class MatlabStubbedClassDeclaration : StubBasedPsiElementBase<MatlabCla
         return this
     }
 
+    override fun getPresentation(): com.intellij.navigation.ItemPresentation? =
+        com.intellij.navigation.ItemPresentationProviders.getItemPresentation(this)
+
     override fun getTextOffset(): Int = nameIdentifier?.node?.startOffset ?: super.getTextOffset()
 
     override fun toString(): String {

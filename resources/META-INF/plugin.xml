@@ -29,6 +29,7 @@
         <li>MATLAB executable setting with auto-detection; run configurations use it unless they set their own</li>
         <li>MATLAB code analyzer (mlint) warnings in the editor, with a %#ok suppress fix</li>
         <li>Packages (+folders) and imports: resolution, completion, unresolved import check, folder icons; methods in @Class folder files</li>
+        <li>Go to Class/Symbol, %% section separators, TODO and spell-checking, live templates, Surround With, unused imports</li>
     </ol>
     ]]>
     </change-notes>
@@ -42,6 +43,18 @@
                                implementationClass="com.github.kornilova203.matlab.MatlabParserDefinition"/>
         <applicationConfigurable parentId="language" id="matlab.settings" displayName="MATLAB"
                                  instance="com.github.kornilova203.matlab.settings.MatlabSettingsConfigurable"/>
+        <gotoClassContributor implementation="com.github.kornilova203.matlab.navigation.MatlabGotoClassContributor"/>
+        <gotoSymbolContributor implementation="com.github.kornilova203.matlab.navigation.MatlabGotoSymbolContributor"/>
+        <itemPresentationProvider forClass="com.github.kornilova203.matlab.psi.impl.MatlabFunctionDeclarationImpl"
+                                  implementationClass="com.github.kornilova203.matlab.navigation.MatlabPresentationProvider"/>
+        <itemPresentationProvider forClass="com.github.kornilova203.matlab.psi.impl.MatlabClassDeclarationImpl"
+                                  implementationClass="com.github.kornilova203.matlab.navigation.MatlabPresentationProvider"/>
+        <codeInsight.lineMarkerProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.highlighting.MatlabSectionSeparatorProvider"/>
+        <indexPatternBuilder implementation="com.github.kornilova203.matlab.MatlabIndexPatternBuilder"/>
+        <spellchecker.support language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabSpellcheckingStrategy"/>
+        <liveTemplateContext contextId="MATLAB" implementation="com.github.kornilova203.matlab.editor.templates.MatlabTemplateContextType"/>
+        <defaultLiveTemplates file="/liveTemplates/Matlab.xml"/>
+        <lang.surroundDescriptor language="Matlab" implementationClass="com.github.kornilova203.matlab.editor.templates.MatlabSurroundDescriptor"/>
         <colorSettingsPage implementation="com.github.kornilova203.matlab.MatlabColorSettingsPage"/>
         <lang.syntaxHighlighterFactory language="Matlab"
                                        implementationClass="com.github.kornilova203.matlab.MatlabSyntaxHighlighterFactory"/>
@@ -100,6 +113,8 @@
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryContinueInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnnecessaryReturn" displayName="Unnecessary 'return' statement" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryReturnInspection"/>
+        <localInspection language="Matlab" shortName="MatlabUnusedImport" displayName="Unused import" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedImportInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnresolvedImport" displayName="Unresolved import" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnresolvedImportInspection"/>
         <iconProvider implementation="com.github.kornilova203.matlab.MatlabFolderIconProvider" order="first"/>

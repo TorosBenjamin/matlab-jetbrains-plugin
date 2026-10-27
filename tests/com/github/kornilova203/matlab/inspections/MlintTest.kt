@@ -84,4 +84,14 @@ class MlintTest : BasePlatformTestCase() {
         MatlabInstallations.clearMlintCacheForTests()
         assertNull(MatlabInstallations.findMlint())
     }
+
+    /** The plugin's own unused-variable check already covers these; don't show them twice. */
+    fun testDuplicateUnusedWarningsHidden() {
+        if (SystemInfo.isWindows) return
+        fakeMatlab("L 1 (C 1): NASGU: The value assigned here to 'x' appears to be unused.",
+            "L 2 (C 1-5): NOPRT: Terminate statement with semicolon.")
+        myFixture.enableInspections(MatlabUnusedVariableInspection::class.java)
+        myFixture.configureByText("main.m", "x = 1;\ny = 2\n")
+        assertEquals(listOf("y = 2 | Terminate statement with semicolon."), mlintWarnings())
+    }
 }

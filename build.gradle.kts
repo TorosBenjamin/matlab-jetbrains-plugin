@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.github.kornilova203"
-version = "0.15.1"
+version = "0.16.0"
 
 repositories {
     mavenCentral()
@@ -25,6 +25,7 @@ dependencies {
         intellijIdeaCommunity("2026.2.3") { useInstaller = false }
         // Structure view classes moved from the core platform into this bundled plugin in 2026.x.
         bundledPlugin("intellij.structureView.plugin")
+        bundledModule("intellij.spellchecker")
         testFramework(TestFrameworkType.Platform)
         pluginVerifier()
     }

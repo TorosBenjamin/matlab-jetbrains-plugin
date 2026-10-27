@@ -4,7 +4,9 @@ import com.github.kornilova203.matlab.psi.MatlabFile
 import com.github.kornilova203.matlab.psi.MatlabTypes
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.github.kornilova203.matlab.settings.MatlabSettings
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.lang.annotation.AnnotationHolder
@@ -59,7 +61,11 @@ class MatlabMlintAnnotator : ExternalAnnotator<MatlabMlintAnnotator.Input, List<
 
     override fun apply(file: PsiFile, problems: List<Problem>, holder: AnnotationHolder) {
         val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
+        // The plugin's own unused-variable check already greys these out and offers a fix.
+        val ownUnusedCheck = InspectionProjectProfileManager.getInstance(file.project).currentProfile
+            .isToolEnabled(HighlightDisplayKey.find("MatlabUnusedVariable"), file)
         for (problem in problems) {
+            if (ownUnusedCheck && problem.id in UNUSED_IDS) continue
             val range = rangeOf(problem, document) ?: continue
             val builder = holder.newAnnotation(HighlightSeverity.WARNING, problem.message)
                 .range(range)
@@ -112,6 +118,9 @@ class MatlabMlintAnnotator : ExternalAnnotator<MatlabMlintAnnotator.Input, List<
     companion object {
         private val LOG = logger<MatlabMlintAnnotator>()
         private const val TIMEOUT_MS = 15_000
+
+        /** mlint's unused variable/input warnings, covered by MatlabUnusedVariableInspection. */
+        private val UNUSED_IDS = setOf("NASGU", "INUSD", "INUSL")
 
         // L 12 (C 5-9): NASGU: The value assigned here to 'x' appears to be unused.
         // L 3 (C 1): Terminate statement with semicolon to suppress output.

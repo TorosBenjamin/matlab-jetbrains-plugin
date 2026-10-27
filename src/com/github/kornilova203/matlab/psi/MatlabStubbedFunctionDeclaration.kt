@@ -38,6 +38,9 @@ abstract class MatlabStubbedFunctionDeclaration : StubBasedPsiElementBase<Matlab
         return this
     }
 
+    override fun getPresentation(): com.intellij.navigation.ItemPresentation? =
+        com.intellij.navigation.ItemPresentationProviders.getItemPresentation(this)
+
     override fun getTextOffset(): Int = nameIdentifier?.node?.startOffset ?: super.getTextOffset()
 
     override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {

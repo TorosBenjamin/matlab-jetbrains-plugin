@@ -1,0 +1,63 @@
+<templateSet group="MATLAB">
+  <template name="for" value="for $VAR$ = $RANGE$&#10;    $END$&#10;end" description="for loop" toReformat="false" toShortenFQNames="false">
+    <variable name="VAR" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true"/>
+    <variable name="RANGE" expression="" defaultValue="&quot;1:n&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="if" value="if $COND$&#10;    $END$&#10;end" description="if block" toReformat="false" toShortenFQNames="false">
+    <variable name="COND" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="ife" value="if $COND$&#10;    $END$&#10;else&#10;    &#10;end" description="if-else block" toReformat="false" toShortenFQNames="false">
+    <variable name="COND" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="wh" value="while $COND$&#10;    $END$&#10;end" description="while loop" toReformat="false" toShortenFQNames="false">
+    <variable name="COND" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="sw" value="switch $EXPR$&#10;    case $VALUE$&#10;        $END$&#10;    otherwise&#10;        &#10;end" description="switch block" toReformat="false" toShortenFQNames="false">
+    <variable name="EXPR" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+    <variable name="VALUE" expression="" defaultValue="&quot;1&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="try" value="try&#10;    $END$&#10;catch $ERR$&#10;    rethrow($ERR$)&#10;end" description="try-catch block" toReformat="false" toShortenFQNames="false">
+    <variable name="ERR" expression="" defaultValue="&quot;err&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="fun" value="function $OUT$ = $NAME$($ARGS$)&#10;%$HELPNAME$ $SUMMARY$&#10;    $END$&#10;end" description="function" toReformat="false" toShortenFQNames="false">
+    <variable name="OUT" expression="" defaultValue="&quot;out&quot;" alwaysStopAt="true"/>
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ARGS" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <variable name="SUMMARY" expression="" defaultValue="&quot;Short description.&quot;" alwaysStopAt="true"/>
+    <variable name="HELPNAME" expression="groovyScript(&quot;_1.toUpperCase()&quot;, NAME)" defaultValue="" alwaysStopAt="false"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="cls" value="classdef $NAME$ &lt; handle&#10;    %$HELPNAME$ $SUMMARY$&#10;    properties&#10;        $PROP$&#10;    end&#10;    methods&#10;        function obj = $NAME$()&#10;            $END$&#10;        end&#10;    end&#10;end" description="classdef" toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;MyClass&quot;" alwaysStopAt="true"/>
+    <variable name="SUMMARY" expression="" defaultValue="&quot;Short description.&quot;" alwaysStopAt="true"/>
+    <variable name="PROP" expression="" defaultValue="&quot;Value&quot;" alwaysStopAt="true"/>
+    <variable name="HELPNAME" expression="groovyScript(&quot;_1.toUpperCase()&quot;, NAME)" defaultValue="" alwaysStopAt="false"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="prop" value="properties&#10;    $END$&#10;end" description="properties block" toReformat="false" toShortenFQNames="false">
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="meth" value="methods&#10;    function $NAME$(obj)&#10;        $END$&#10;    end&#10;end" description="methods block" toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="args" value="arguments&#10;    $NAME$ $TYPE$&#10;end" description="arguments block" toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;x&quot;" alwaysStopAt="true"/>
+    <variable name="TYPE" expression="" defaultValue="&quot;double&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="sec" value="%% $TITLE$&#10;$END$" description="code section" toReformat="false" toShortenFQNames="false">
+    <variable name="TITLE" expression="" defaultValue="&quot;Section&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+  <template name="fpr" value="fprintf(&#x27;$TEXT$\n&#x27;$END$);" description="fprintf with newline" toReformat="false" toShortenFQNames="false">
+    <variable name="TEXT" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context><option name="MATLAB" value="true"/></context>
+  </template>
+</templateSet>
