@@ -18,6 +18,7 @@
         <li>Structure view, MATLAB color settings page</li>
         <li>Colors for fields, method calls, parameters and the object variable (obj)</li>
         <li>Fixed links to MathWorks documentation; doc search fallback for functions without a page</li>
+        <li>Fixed "PSI and index do not match" errors after upgrading (stubs are rebuilt)</li>
     </ol>
     ]]>
     </change-notes>
