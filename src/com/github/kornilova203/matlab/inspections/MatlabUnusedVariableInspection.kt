@@ -31,6 +31,8 @@ class MatlabUnusedVariableInspectionVisitor(private val holder: ProblemsHolder) 
     }
 
     override fun visitParameter(parameter: MatlabParameter) {
+        // A method must take the object as its first input even if it doesn't use it (like self in Python).
+        if (isObjectReference(parameter)) return
         val function = parameter.parentOfTypes(MatlabFunctionDeclaration::class)
         val retValues = function?.returnValues?.retValueList
         if (retValues != null) {
@@ -53,6 +55,8 @@ class MatlabUnusedVariableInspectionVisitor(private val holder: ProblemsHolder) 
     }
 
     override fun visitRetValue(retValue: MatlabRetValue) {
+        // A constructor's output (obj in `function obj = Shape()`) is the new object, created by MATLAB.
+        if (objectClassOf(retValue) != null) return
         val retValues = retValue.parent
         registerProblem(retValue as? MatlabDeclaration, "return value") {
             if (retValues.children.size == 1 && retValues.firstChild.elementType != MatlabTypes.LBRACKET) {

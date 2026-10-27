@@ -23,6 +23,7 @@ class UnusedVariableTest : MatlabInspectionTest() {
     fun testSameRetValueAndParameterUnused() = doTest()
     fun testFor() = doTest(false)
     fun testNestedFunction() = doTest(false)
+    fun testConstructorOutput() = doTest(false)
     fun testLocalFunctionsWithoutEnd() = doTest(false)
 
     private fun doTest(checkFix: Boolean = true) {
