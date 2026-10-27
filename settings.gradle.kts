@@ -1,1 +1,1 @@
-rootProject.name = "IntelliJMatlabSupport"
+rootProject.name = "unofficial-matlab-support"

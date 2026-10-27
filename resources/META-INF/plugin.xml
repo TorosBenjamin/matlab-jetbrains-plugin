@@ -1,39 +1,42 @@
 <idea-plugin>
-    <id>MatlabSupport</id>
-    <name>Matlab Support (fork)</name>
+    <id>io.github.bendzsi.matlab</id>
+    <name>Unofficial MATLAB Support</name>
 
-    <vendor url="https://github.com/kornilova203" email="kornilova203@gmail.com">Liudmila Kornilova</vendor>
+    <vendor url="https://github.com/TorosBenjamin/matlab-jetbrains-plugin" email="toros.benjamin@tuta.io">bendzsi</vendor>
 
     <description><![CDATA[
-    <strong>Matlab syntax highlighting plugin for JetBrains IDEs.</strong><br>
-    Documentation: <a href="https://github.com/kornilova203/matlab-IntelliJ-plugin">github.com/kornilova203/matlab-IntelliJ-plugin</a>
+    Unofficial MATLAB language support for JetBrains IDEs: editing, navigation, code analysis and running,
+    without starting MATLAB for anything but running scripts.
+    <ul>
+      <li>Parser for modern MATLAB: classes, packages (<code>+pkg</code>), class folders (<code>@Cls</code>),
+          <code>arguments</code> blocks, command syntax, <code>import</code></li>
+      <li>Semantic highlighting, go to definition, find usages, rename (classes, files and constructors together),
+          usage counts, structure view, breadcrumbs, folding of <code>%%</code> sections</li>
+      <li>Completion that depends on the position: class members after <code>obj.</code>, struct fields,
+          attributes, types, validators, package members; return types of methods such as singletons</li>
+      <li>Inspections: unused variables, functions and imports, unreachable code; MATLAB's own code analyzer
+          (mlint) when MATLAB is installed</li>
+      <li>Run scripts or single <code>%%</code> sections with MATLAB or GNU Octave, from the gutter</li>
+      <li>Live templates, Surround With, auto-inserted <code>end</code>, TODO and spell-checking</li>
+    </ul>
+    <p>Built on <a href="https://github.com/kornilova203/matlab-IntelliJ-plugin">Matlab Support</a> by Liudmila Kornilova.
+    Uninstall that plugin before installing this one: both handle <code>.m</code> files. In CLion, <code>.m</code> files
+    are Objective-C, so the two conflict there.</p>
+    <p><i>Not affiliated with or endorsed by MathWorks. MATLAB is a registered trademark of The MathWorks, Inc.</i></p>
     ]]></description>
 
     <change-notes><![CDATA[
-    <ol>
-        <li>Build for IntelliJ 2025.2+ (IntelliJ Platform Gradle Plugin 2.x, Kotlin 2.4)</li>
-        <li>Removed daily update-check ping</li>
-        <li>Fixed possible deadlock in code completion</li>
-        <li>Parser: command syntax, arguments blocks, persistent, package-qualified class names, superclass calls</li>
-        <li>Structure view, MATLAB color settings page</li>
-        <li>Colors for fields, method calls, parameters and the object variable (obj)</li>
-        <li>Fixed links to MathWorks documentation; doc search fallback for functions without a page</li>
-        <li>Fixed "PSI and index do not match" errors after upgrading (stubs are rebuilt)</li>
-        <li>Colors for properties, constants, types, attributes, events; obj.method without () recognized; obj. completes class members</li>
-        <li>Nested functions see the outer function's variables (no false "unused variable")</li>
-        <li>Function call color (disp(x), helper(3), hold on, @f); indexing a variable keeps the variable color</li>
-        <li>Auto-insert end (can be turned off in Settings | Languages &amp; Frameworks | MATLAB), fold %% sections, breadcrumbs</li>
-        <li>Completion depends on position: nothing for new names, attribute names/values, types, validators</li>
-        <li>Return types: singletons (getInstance), arguments (Output) blocks and factory functions; members of the result resolve and complete</li>
-        <li>Unused local/nested functions and private methods; "N usages" above functions, classes and properties</li>
-        <li>MATLAB executable setting with auto-detection; run configurations use it unless they set their own</li>
-        <li>MATLAB code analyzer (mlint) warnings in the editor, with a %#ok suppress fix</li>
-        <li>Packages (+folders) and imports: resolution, completion, unresolved import check, folder icons; methods in @Class folder files</li>
-        <li>Go to Class/Symbol, %% section separators, TODO and spell-checking, live templates, Surround With, unused imports</li>
-        <li>Struct field completion; run a single %% section; run icons in the gutter</li>
-    </ol>
-    ]]>
-    </change-notes>
+    <p>1.0.0: first release as a separate plugin, continuing <i>Matlab Support</i> 0.8.5.</p>
+    <ul>
+      <li>Parser: command syntax, arguments blocks, persistent, packages, imports, superclass calls, method signatures</li>
+      <li>Highlighting of fields, methods, parameters, types, attributes, function calls; color settings page</li>
+      <li>Type inference for objects, method results and singletons; struct field completion</li>
+      <li>Packages and class folders, rename with files, usage counts, unused function and import inspections</li>
+      <li>mlint integration, MATLAB executable setting with auto-detection, running single sections</li>
+      <li>Navigation, structure view, breadcrumbs, live templates, Surround With, auto-inserted end</li>
+      <li>Built for IntelliJ Platform 2025.2+</li>
+    </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.lang</depends>
 

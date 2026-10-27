@@ -8,8 +8,8 @@ plugins {
     id("org.jetbrains.grammarkit") version "2023.3.0.4"
 }
 
-group = "com.github.kornilova203"
-version = "0.17.0"
+group = "io.github.bendzsi"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -65,6 +65,16 @@ intellijPlatform {
         }
     }
     buildSearchableOptions = false
+    // Marketplace signing and upload read their secrets from the environment, never from the repository:
+    //   CERTIFICATE_CHAIN, PRIVATE_KEY, PRIVATE_KEY_PASSWORD (./gradlew signPlugin) and PUBLISH_TOKEN (./gradlew publishPlugin)
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+    }
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+    }
     pluginVerification {
         ides {
             create("IC", "2025.2.4") { useInstaller = false }
