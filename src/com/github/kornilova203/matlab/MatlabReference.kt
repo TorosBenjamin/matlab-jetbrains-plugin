@@ -62,7 +62,8 @@ class MatlabReference(myElement: MatlabRefExpr) : PsiPolyVariantReferenceBase<Ma
     private fun <Psi : PsiElement?> resolveIndex(processor: PsiScopeProcessor, indexKey: StubIndexKey<String, Psi>, requiredClass: Class<Psi>) {
         StubIndex.getInstance().processElements(indexKey, myElement.text, myElement.project, GlobalSearchScope.projectScope(myElement.project), requiredClass) { psiElement ->
             if (psiElement != null) {
-                if (psiElement.containingFile != myElement.containingFile && psiElement.containingFile.name == myElement.text + ".m") {
+                if (psiElement.containingFile != myElement.containingFile && psiElement.containingFile.name == myElement.text + ".m" &&
+                        MatlabPackages.isVisibleByPlainName(psiElement, myElement)) {
                     processor.execute(psiElement, ResolveState.initial())
                 }
             }

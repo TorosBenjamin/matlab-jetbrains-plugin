@@ -28,6 +28,7 @@
         <li>Unused local/nested functions and private methods; "N usages" above functions, classes and properties</li>
         <li>MATLAB executable setting with auto-detection; run configurations use it unless they set their own</li>
         <li>MATLAB code analyzer (mlint) warnings in the editor, with a %#ok suppress fix</li>
+        <li>Packages (+folders) and imports: resolution, completion, unresolved import check, folder icons; methods in @Class folder files</li>
     </ol>
     ]]>
     </change-notes>
@@ -98,6 +99,9 @@
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryContinueInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnnecessaryReturn" displayName="Unnecessary 'return' statement" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryReturnInspection"/>
+        <localInspection language="Matlab" shortName="MatlabUnresolvedImport" displayName="Unresolved import" groupName="Matlab" enabledByDefault="true" level="WARNING"
+                         implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnresolvedImportInspection"/>
+        <iconProvider implementation="com.github.kornilova203.matlab.MatlabFolderIconProvider" order="first"/>
         <localInspection language="Matlab" shortName="MatlabUnusedFunction" displayName="Unused function or private method" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedFunctionInspection"/>
         <codeInsight.daemonBoundCodeVisionProvider implementation="com.github.kornilova203.matlab.codeVision.MatlabUsagesCodeVisionProvider"/>

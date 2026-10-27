@@ -78,7 +78,7 @@ fun processDeclarationsInClass(processor: PsiScopeProcessor, state: ResolveState
             MatlabFunctionDeclaration::class.java,
             MatlabEnumItem::class.java)
 
-    for (declaration in declarations) {
+    for (declaration in declarations + MatlabPackages.methodFiles(classDeclaration)) {
         if (!processor.execute(declaration, state)) {
             break
         }

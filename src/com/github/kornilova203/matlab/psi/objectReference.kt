@@ -15,6 +15,10 @@ import com.intellij.psi.util.PsiTreeUtil
 /** The class whose object [declaration] holds, if it's the object variable of a classdef method. */
 fun objectClassOf(declaration: PsiElement): MatlabClassDeclaration? {
     val function = ownerFunction(declaration) ?: return null
+    // Method in its own file of an @Cls folder that also has classdef Cls: function a = area(obj)
+    if (function.parent is MatlabFile && declaration is MatlabParameter && isFirstParameter(declaration, function)) {
+        MatlabPackages.classOfMethodFile(function.containingFile.originalFile.virtualFile, function.project)?.let { return it }
+    }
     if (function.parent !is MatlabMethodsList) return null
     val cls = PsiTreeUtil.getParentOfType(function, MatlabClassDeclaration::class.java) ?: return null
     val constructor = isConstructor(function, cls)

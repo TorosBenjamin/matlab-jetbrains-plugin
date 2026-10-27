@@ -16,7 +16,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 /**
  * @author Liudmila Kornilova
  **/
-class MatlabCompletionScopeProcessor(private val result: CompletionResultSet) : PsiScopeProcessor {
+class MatlabCompletionScopeProcessor(val result: CompletionResultSet) : PsiScopeProcessor {
 
     override fun execute(decl: PsiElement, state: ResolveState): Boolean {
         if (decl !is MatlabDeclaration) return true

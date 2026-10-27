@@ -45,6 +45,12 @@ class MatlabContextCompletionContributor : CompletionContributor() {
                 .forEach { result.addElement(MatlabKeywordCompletionContributor.keywordElement(it)) }
             return true
         }
+        if (parent is MatlabCommandArguments) {
+            // Words after a command are plain text; only import knows what can follow.
+            val command = parent.parent as? MatlabCommandStatement
+            if (command?.refExpr?.text == "import") completeImport(identifier, parent, result)
+            return true
+        }
         if (isNewName(identifier, parent)) {
             blockKeywords(identifier, parent).forEach { result.addElement(MatlabKeywordCompletionContributor.keywordElement(it)) }
             return true
@@ -79,6 +85,30 @@ class MatlabContextCompletionContributor : CompletionContributor() {
             return true
         }
         return false
+    }
+
+    /** `import geo|`, `import geometry.|`: packages, then their members and `*`. */
+    private fun completeImport(identifier: PsiElement, args: PsiElement, result: CompletionResultSet) {
+        val project = identifier.project
+        // The dotted name being typed, up to the current segment: "geometry." in "geometry.Po|"
+        val typed = args.text.substring(0, identifier.textRange.startOffset - args.textRange.startOffset)
+            .split(Regex("[\\s,;]+")).last()
+        val pkg = typed.removeSuffix(".").takeIf { typed.endsWith(".") }
+        if (pkg == null) {
+            add(result, MatlabPackages.rootPackages(project) + libraryPackages(""), AllIcons.Nodes.Package)
+            return
+        }
+        if (MatlabPackages.isPackage(project, pkg)) MatlabReferenceCompletionContributor.addPackageMembers(project, pkg, result)
+        add(result, libraryPackages(pkg), AllIcons.Nodes.Package)
+        result.addElement(LookupElementBuilder.create("*").withTailText(" (everything in $pkg)", true))
+    }
+
+    /** Names in [pkg] from MATLAB's own function list (matlab.unittest.TestCase -> unittest under matlab). */
+    private fun libraryPackages(pkg: String): Set<String> {
+        val prefix = if (pkg.isEmpty()) "" else "$pkg."
+        return MatlabLibraryDocs.functionNames.asSequence()
+            .filter { it.startsWith(prefix) && it.length > prefix.length && (pkg.isNotEmpty() || it.contains('.')) }
+            .map { it.substring(prefix.length).substringBefore('.') }.toSet()
     }
 
     /** Positions where the user types a name that doesn't exist yet. */

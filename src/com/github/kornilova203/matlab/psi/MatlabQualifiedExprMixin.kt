@@ -17,6 +17,15 @@ abstract class MatlabQualifiedExprMixin(node: ASTNode) : MatlabBinaryExprImpl(no
         if (lastParent != this.right) {
             return true
         }
+        // geometry.Point, geometry.shapes.Circle: members of a package
+        MatlabPackages.dottedName(firstChild)?.takeIf { MatlabPackages.isPackage(project, it) }?.let { pkg ->
+            for (member in MatlabPackages.members(project, pkg)) {
+                for (declaration in MatlabPackages.memberDeclarations(project, pkg, member.name)) {
+                    if (!processor.execute(declaration, state)) return false
+                }
+            }
+            return true
+        }
         val element = this.firstChild
         if (element !is MatlabTypedExpr) {
             return true
