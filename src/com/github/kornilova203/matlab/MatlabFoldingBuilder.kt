@@ -89,15 +89,24 @@ class MatlabFoldingBuilder : CustomFoldingBuilder() {
             return child.textRange.endOffset
         }
 
+        // Start after the block's header line. Comments on their own lines (a function's help text) are
+        // folded with the body; a comment at the end of the header line (`if x % check`) stays visible.
         var prev = node.treePrev
         while (prev != null) {
             val type = prev.elementType
-            if (type != WHITE_SPACE && type != MatlabTypes.NEWLINE) {
+            val isOwnLineComment = type == MatlabTypes.COMMENT && startsLine(prev)
+            if (type != WHITE_SPACE && type != MatlabTypes.NEWLINE && !isOwnLineComment) {
                 return prev.textRange.endOffset
             }
             prev = prev.treePrev
         }
         return node.textRange.startOffset
+    }
+
+    private fun startsLine(node: ASTNode): Boolean {
+        var prev = node.treePrev
+        while (prev != null && prev.elementType == WHITE_SPACE) prev = prev.treePrev
+        return prev == null || prev.elementType == MatlabTypes.NEWLINE
     }
 
     private fun getEndOffset(node: ASTNode): Int {

@@ -19,4 +19,5 @@ class FoldingTest : BasePlatformTestCase() {
     fun testFunction() = doTest()
     fun testClass() = doTest()
     fun testSections() = doTest()
+    fun testHelpComment() = doTest()
 }
