@@ -21,7 +21,7 @@ class MatlabTypeFunction(val decl: MatlabStubbedFunctionDeclaration) : MatlabTyp
         if (retValues?.size == 1) {
             val retValue = retValues[0].text
             val parameterList = decl.parameters?.parameterList
-            val leftParameter = parameterList?.get(0)?.text
+            val leftParameter = parameterList?.firstOrNull()?.text  // methods may have no parameters
             return if (retValue == leftParameter) classDeclaration else null
         }
         return null
