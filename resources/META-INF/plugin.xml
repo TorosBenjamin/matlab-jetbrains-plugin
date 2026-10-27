@@ -27,6 +27,7 @@
         <li>Return types: singletons (getInstance), arguments (Output) blocks and factory functions; members of the result resolve and complete</li>
         <li>Unused local/nested functions and private methods; "N usages" above functions, classes and properties</li>
         <li>MATLAB executable setting with auto-detection; run configurations use it unless they set their own</li>
+        <li>MATLAB code analyzer (mlint) warnings in the editor, with a %#ok suppress fix</li>
     </ol>
     ]]>
     </change-notes>
@@ -64,6 +65,7 @@
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabLibraryFunctionCompletionContributor"/>
         <lang.findUsagesProvider language="Matlab"
                                  implementationClass="com.github.kornilova203.matlab.MatlabFindUsagesProvider"/>
+        <externalAnnotator language="Matlab" implementationClass="com.github.kornilova203.matlab.inspections.MatlabMlintAnnotator"/>
         <annotator language="Matlab" implementationClass="com.github.kornilova203.matlab.highlighting.MatlabAnnotator"/>
         <lang.elementManipulator forClass="com.github.kornilova203.matlab.psi.impl.MatlabRefExprImpl"
                                  implementationClass="com.github.kornilova203.matlab.psi.MatlabElementManipulator"/>

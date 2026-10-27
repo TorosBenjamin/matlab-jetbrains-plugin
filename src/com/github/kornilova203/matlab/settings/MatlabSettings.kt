@@ -20,9 +20,16 @@ class MatlabSettings : SimplePersistentStateComponent<MatlabSettings.State>(Stat
         /** Pressing Enter after `if x`, `for ...`, `function ...` inserts the matching `end`. */
         var insertEnd by property(true)
 
+        /** Show warnings from MATLAB's code analyzer (mlint) in the editor. */
+        var useMlint by property(true)
+
         /** MATLAB (or Octave) executable used to run scripts; empty means detect it. */
         var matlabPath by string()
     }
+
+    var useMlint: Boolean
+        get() = state.useMlint
+        set(value) { state.useMlint = value }
 
     var matlabPath: String?
         get() = state.matlabPath
@@ -52,6 +59,14 @@ class MatlabSettingsConfigurable : BoundConfigurable("MATLAB") {
                 button("Detect") {
                     MatlabInstallations.detect().firstOrNull()?.let { path.component.text = it }
                 }
+            }
+        }
+        group("Code Analysis") {
+            row {
+                checkBox("Show MATLAB code analyzer (mlint) warnings")
+                    .bindSelected(settings::useMlint)
+                    .comment(MatlabInstallations.findMlint()?.let { "Uses <code>$it</code>. It runs without starting MATLAB." }
+                        ?: "Needs a MATLAB installation (not Octave); none with mlint was found.")
             }
         }
         group("Editor") {
