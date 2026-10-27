@@ -21,6 +21,9 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
     private var filePath: String? = null // null or non empty string
     private var interpreterOptions: String? = null // null or non empty string
 
+    /** Lines (0-based, inclusive) of the code section to run instead of the whole file; null runs the file. */
+    var sectionLines: IntRange? = null
+
     /* see AbstractRunConfiguration */
     private val myEnvs = LinkedHashMap<String, String>()
     private var myPassParentEnvs = true
@@ -76,6 +79,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
         JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", isPassParentEnvs.toString())
         JDOMExternalizerUtil.writeField(element, "PARAMETERS", programParameters)
         JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", interpreterOptions)
+        sectionLines?.let { JDOMExternalizerUtil.writeField(element, "SECTION_LINES", "${it.first}-${it.last}") }
         EnvironmentVariablesComponent.writeExternal(element, myEnvs)
     }
 
@@ -95,6 +99,8 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
         if (interpreterOptions.isNullOrBlank()) {
             interpreterOptions = null
         }
+        sectionLines = JDOMExternalizerUtil.readField(element, "SECTION_LINES")?.split('-')
+            ?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size == 2 }?.let { it[0]..it[1] }
         workingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY")
         programParameters = JDOMExternalizerUtil.readField(element, "PARAMETERS")
 

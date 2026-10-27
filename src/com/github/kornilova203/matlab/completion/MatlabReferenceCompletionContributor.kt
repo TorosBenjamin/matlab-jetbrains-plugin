@@ -56,6 +56,7 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
         }
         val type = (qualified.firstChild as? MatlabTypedExpr)?.getType()?.let(::memberOwnerClass)
         if (type != null) processDeclarationsInClass(processor, ResolveState.initial(), type)
+        else pkg?.let { addStructFields(position, it, processor.result) }  // s.<caret>: a struct
         return true
     }
 
@@ -92,6 +93,31 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
                 return@processElements true
             }
         }
+    }
+
+    /**
+     * Fields of struct [variable] (`s` or `s.inner`) seen in the same function or script:
+     * `s.name = ...`, uses like `s.age`, and `s = struct('name', ..., 'age', ...)`.
+     */
+    private fun addStructFields(position: PsiElement, variable: String, result: CompletionResultSet) {
+        val scope = com.github.kornilova203.matlab.psi.types.ownScope(position)
+        val fields = LinkedHashSet<String>()
+        val prefix = "$variable."
+        for (expr in PsiTreeUtil.findChildrenOfType(scope, MatlabQualifiedExpr::class.java)) {
+            val name = MatlabPackages.dottedName(expr) ?: continue
+            if (!name.startsWith(prefix)) continue
+            val field = name.substring(prefix.length).substringBefore('.')
+            if (field.isNotEmpty() && !field.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) fields += field
+        }
+        for (assign in PsiTreeUtil.findChildrenOfType(scope, com.github.kornilova203.matlab.psi.MatlabAssignExpr::class.java)) {
+            if (assign.left?.text != variable) continue
+            val call = assign.right as? com.github.kornilova203.matlab.psi.MatlabFunctionExpr ?: continue
+            if (call.expr?.text != "struct") continue
+            // struct('name', value, 'age', value): every other argument is a field name
+            call.arguments.children.filterIndexed { i, _ -> i % 2 == 0 }
+                .map { it.text.trim('\'', '"') }.filter { it.matches(Regex("[A-Za-z]\\w*")) }.forEach { fields += it }
+        }
+        fields.forEach { result.addElement(LookupElementBuilder.create(it).withIcon(AllIcons.Nodes.Field)) }
     }
 
     companion object {

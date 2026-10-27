@@ -57,4 +57,15 @@ class ContextCompletionTest : BasePlatformTestCase() {
         val v = variants("classdef A\n    methods\n    end\n    <caret>\n    methods\n    end\nend\n")
         assertSameElements(v, "properties", "methods", "events", "enumeration", "end")
     }
+
+    fun testStructFields() {
+        val v = variants("s.name = 'x';\ns.age = 3;\nt = s.size;\nu = s.<caret>\n")
+        assertContainsElements(v, "name", "age", "size")
+    }
+
+    fun testStructFunctionFields() =
+        assertContainsElements(variants("cfg = struct('Path', 'a', 'Depth', 2);\ncfg.<caret>\n"), "Path", "Depth")
+
+    fun testNestedStructFields() =
+        assertSameElements(variants("s.inner.a = 1;\ns.inner.b = 2;\ns.other = 3;\ns.inner.<caret>\n"), "a", "b")
 }

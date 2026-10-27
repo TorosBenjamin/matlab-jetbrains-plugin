@@ -16,7 +16,10 @@ class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguratio
     : CommandLineState(environment) {
 
     override fun startProcess(): ProcessHandler {
-        val workingDir = ProgramParametersUtil.getWorkingDir(runConfiguration, runConfiguration.project, null)
+        // A section runs from the script's folder, like the whole script does via run().
+        val workingDir = if (runConfiguration.sectionLines != null && runConfiguration.workingDirectory.isNullOrBlank())
+            File(runConfiguration.getFilePath()!!).parent
+        else ProgramParametersUtil.getWorkingDir(runConfiguration, runConfiguration.project, null)
         val processHandler = KillableColoredProcessHandler(createCommandLine(workingDir, runConfiguration))
         ProcessTerminatedListener.attach(processHandler, environment.project)
         return processHandler
@@ -29,10 +32,18 @@ class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguratio
 
             runConfiguration.getInterpreterOptions()?.let { cmd.addParameters(ParametersListUtil.parse(it)) }
 
-            // Quotes inside a MATLAB char literal are escaped by doubling them.
-            val file = runConfiguration.getFilePath()!!.replace("'", "''")
             // Keep the process alive while figure windows are open.
-            val code = "run('$file'); if ~isempty(get(0, 'Children')), uiwait; end"
+            val waitForFigures = "if ~isempty(get(0, 'Children')), uiwait; end"
+            val section = runConfiguration.sectionLines
+            val code = if (section == null) {
+                // Quotes inside a MATLAB char literal are escaped by doubling them.
+                "run('${quote(runConfiguration.getFilePath()!!)}'); $waitForFigures"
+            } else {
+                // The section's lines become a temporary script, called by name so the working
+                // directory stays the script's folder (run() would switch to the temporary folder).
+                val script = sectionScript(runConfiguration.getFilePath()!!, section)
+                "addpath('${quote(script.parent)}'); ${script.nameWithoutExtension}; $waitForFigures"
+            }
             cmd.addParameters(if (isOctave(interpreter)) "--eval" else "-batch", code)
 
             return cmd.withWorkDirectory(workingDir)
@@ -41,6 +52,17 @@ class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguratio
                     else GeneralCommandLine.ParentEnvironmentType.NONE
                 )
                 .withEnvironment(runConfiguration.envs)
+        }
+
+        private fun quote(path: String) = path.replace("'", "''")
+
+        internal fun sectionScript(filePath: String, lines: IntRange): File {
+            val source = File(filePath).readLines()
+            val code = source.subList(lines.first.coerceIn(0, source.size), (lines.last + 1).coerceIn(0, source.size))
+            val dir = com.intellij.openapi.util.io.FileUtil.createTempDirectory("matlab-section", null, true)
+            // A valid MATLAB name: letters, digits and underscores, starting with a letter.
+            val name = "section_" + Integer.toHexString((filePath + lines).hashCode())
+            return File(dir, "$name.m").apply { writeText(code.joinToString("\n") + "\n") }
         }
 
         private fun isOctave(interpreter: String): Boolean = File(interpreter).name.lowercase().contains("octave")

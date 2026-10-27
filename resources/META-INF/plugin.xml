@@ -30,6 +30,7 @@
         <li>MATLAB code analyzer (mlint) warnings in the editor, with a %#ok suppress fix</li>
         <li>Packages (+folders) and imports: resolution, completion, unresolved import check, folder icons; methods in @Class folder files</li>
         <li>Go to Class/Symbol, %% section separators, TODO and spell-checking, live templates, Surround With, unused imports</li>
+        <li>Struct field completion; run a single %% section; run icons in the gutter</li>
     </ol>
     ]]>
     </change-notes>
@@ -60,6 +61,8 @@
                                        implementationClass="com.github.kornilova203.matlab.MatlabSyntaxHighlighterFactory"/>
         <configurationType implementation="com.github.kornilova203.matlab.execution.MatlabConfigurationType"/>
         <programRunner implementation="com.github.kornilova203.matlab.execution.MatlabProgramRunner"/>
+        <runConfigurationProducer implementation="com.github.kornilova203.matlab.execution.MatlabSectionRunConfigurationProducer"/>
+        <runLineMarkerContributor language="Matlab" implementationClass="com.github.kornilova203.matlab.execution.MatlabRunLineMarkerContributor"/>
         <runConfigurationProducer
                 implementation="com.github.kornilova203.matlab.execution.MatlabRunConfigurationProducer"/>
 

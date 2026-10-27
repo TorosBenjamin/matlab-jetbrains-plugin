@@ -36,6 +36,11 @@ abstract class RunConfigurationTestCase : BasePlatformTestCase() {
         return null
     }
 
+    /** All MATLAB run configurations offered for [element] (e.g. whole file and section). */
+    protected fun configurationsFor(element: PsiElement): List<MatlabRunConfiguration> =
+        createContext(element, MapDataContext()).configurationsFromContext.orEmpty()
+            .mapNotNull { it.configuration as? MatlabRunConfiguration }
+
     private fun createContext(psiClass: PsiElement, dataContext: MapDataContext): ConfigurationContext {
         dataContext.put(CommonDataKeys.PROJECT, project)
         if (LangDataKeys.MODULE.getData(dataContext) == null) {
