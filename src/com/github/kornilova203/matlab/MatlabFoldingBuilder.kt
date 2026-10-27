@@ -9,6 +9,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType.WHITE_SPACE
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
+import com.github.kornilova203.matlab.structure.MatlabStructureElement
 
 
 class MatlabFoldingBuilder : CustomFoldingBuilder() {
@@ -18,6 +22,38 @@ class MatlabFoldingBuilder : CustomFoldingBuilder() {
         }
 
         appendDescriptors(root.node, descriptors)
+        appendSectionDescriptors(root, descriptors)
+    }
+
+    /** `%% Title` code sections fold from the end of the title line to the next section in the same block. */
+    private fun appendSectionDescriptors(root: PsiElement, descriptors: MutableList<FoldingDescriptor>) {
+        val headers = PsiTreeUtil.collectElementsOfType(root, PsiComment::class.java)
+            .filter { MatlabStructureElement.sectionTitle(it) != null }
+            .groupBy { it.parent }
+        for ((parent, sections) in headers) {
+            val sorted = sections.sortedBy { it.textOffset }
+            for ((i, header) in sorted.withIndex()) {
+                val start = header.textRange.endOffset
+                val end = if (i + 1 < sorted.size) contentEndBefore(sorted[i + 1]) else contentEnd(parent)
+                if (end > start) descriptors.add(FoldingDescriptor(header.node, TextRange(start, end)))
+            }
+        }
+    }
+
+    /** End of the last non-blank element before [element]. */
+    private fun contentEndBefore(element: PsiElement): Int =
+        PsiTreeUtil.skipWhitespacesAndCommentsBackward(element)?.let { prev ->
+            var e: PsiElement = prev
+            while (e.node.elementType == MatlabTypes.NEWLINE) e = e.prevSibling ?: break
+            e.textRange.endOffset
+        } ?: element.textRange.startOffset
+
+    /** End of the last non-blank element in [parent], before a closing `end`. */
+    private fun contentEnd(parent: PsiElement): Int {
+        var last = parent.lastChild
+        while (last != null && (last is PsiWhiteSpace || last.node.elementType == MatlabTypes.NEWLINE ||
+                    last.node.elementType == MatlabTypes.END)) last = last.prevSibling
+        return last?.textRange?.endOffset ?: parent.textRange.endOffset
     }
 
     private fun appendDescriptors(node: ASTNode, descriptors: MutableList<FoldingDescriptor>) {

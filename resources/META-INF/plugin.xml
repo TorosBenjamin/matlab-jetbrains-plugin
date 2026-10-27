@@ -63,6 +63,7 @@
         <lang.smartEnterProcessor language="Matlab"
                                   implementationClass="com.github.kornilova203.matlab.editor.smartEnter.MatlabSmartEnter"/>
         <lang.psiStructureViewFactory language="Matlab" implementationClass="com.github.kornilova203.matlab.structure.MatlabStructureViewFactory"/>
+        <breadcrumbsInfoProvider implementation="com.github.kornilova203.matlab.structure.MatlabBreadcrumbsProvider"/>
         <lang.foldingBuilder language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabFoldingBuilder"/>
         <lineIndentProvider implementation="com.github.kornilova203.matlab.MatlabLineIndentProvider"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterInStringLiteralHandler"/>
@@ -71,6 +72,7 @@
         <inlineActionHandler implementation="com.github.kornilova203.matlab.refactoring.MatlabInlineVariableHandler"/>
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterHandler"/>
+        <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEndInserter"/>
         <codeInsight.typeInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabTypeProvider"/>
 
         <stubElementTypeHolder class="com.github.kornilova203.matlab.psi.MatlabTypes"/>

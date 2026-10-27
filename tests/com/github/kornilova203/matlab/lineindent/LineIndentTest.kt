@@ -12,6 +12,17 @@ class LineIndentTest : BasePlatformTestCase() {
 
     override fun getTestDataPath(): String = getTestDataRoot(javaClass)
 
+    // These tests type whole files, including the `end`s.
+    override fun setUp() {
+        super.setUp()
+        com.github.kornilova203.matlab.editor.actions.MatlabEndInserter.enabled = false
+    }
+
+    override fun tearDown() {
+        com.github.kornilova203.matlab.editor.actions.MatlabEndInserter.enabled = true
+        super.tearDown()
+    }
+
     fun testIf() = doTest()
     fun testIfNested() = doTest()
     fun testTryCatch() = doTest()
