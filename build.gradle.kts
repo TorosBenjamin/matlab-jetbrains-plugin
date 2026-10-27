@@ -23,6 +23,8 @@ dependencies {
         // Community build: the plugin only needs the shared language APIs, and
         // Ultimate-only startup code breaks the test sandbox.
         intellijIdeaCommunity("2026.2.3") { useInstaller = false }
+        // Structure view classes moved from the core platform into this bundled plugin in 2026.x.
+        bundledPlugin("intellij.structureView.plugin")
         testFramework(TestFrameworkType.Platform)
         pluginVerifier()
     }
