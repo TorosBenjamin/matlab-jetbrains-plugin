@@ -17,6 +17,7 @@
         <li>Parser: command syntax, arguments blocks, persistent, package-qualified class names, superclass calls</li>
         <li>Structure view, MATLAB color settings page</li>
         <li>Colors for fields, method calls, parameters and the object variable (obj)</li>
+        <li>Fixed links to MathWorks documentation; doc search fallback for functions without a page</li>
     </ol>
     ]]>
     </change-notes>
