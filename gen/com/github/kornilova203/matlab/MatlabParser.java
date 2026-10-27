@@ -855,7 +855,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (( properties_block | methods_block | events_block | enumeration_block ) NEWLINE*)*
+  // (( properties_block | methods_block | events_block | enumeration_block | unexpected_in_class ) NEWLINE*)*
   static boolean class_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_body")) return false;
     Marker m = enter_section_(b, l, _NONE_);
@@ -868,7 +868,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ( properties_block | methods_block | events_block | enumeration_block ) NEWLINE*
+  // ( properties_block | methods_block | events_block | enumeration_block | unexpected_in_class ) NEWLINE*
   private static boolean class_body_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_body_0")) return false;
     boolean r;
@@ -879,16 +879,15 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // properties_block | methods_block | events_block | enumeration_block
+  // properties_block | methods_block | events_block | enumeration_block | unexpected_in_class
   private static boolean class_body_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_body_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = properties_block(b, l + 1);
     if (!r) r = methods_block(b, l + 1);
     if (!r) r = events_block(b, l + 1);
     if (!r) r = enumeration_block(b, l + 1);
-    exit_section_(b, m, null, r);
+    if (!r) r = unexpected_in_class(b, l + 1);
     return r;
   }
 
@@ -1400,7 +1399,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, enumeration_block_2(b, l + 1)) && r;
     r = p && report_error_(b, enumeration_block_3(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
-    exit_section_(b, l, m, r, p, MatlabParser::block_inside_class_recovery);
+    exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
@@ -1514,7 +1513,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, events_list(b, l + 1)) && r;
     r = p && report_error_(b, events_block_5(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
-    exit_section_(b, l, m, r, p, MatlabParser::block_inside_class_recovery);
+    exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
@@ -2401,7 +2400,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, methods_list(b, l + 1)) && r;
     r = p && report_error_(b, methods_block_5(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
-    exit_section_(b, l, m, r, p, MatlabParser::block_inside_class_recovery);
+    exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
@@ -3284,7 +3283,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, properties_list(b, l + 1)) && r;
     r = p && report_error_(b, properties_block_5(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
-    exit_section_(b, l, m, r, p, MatlabParser::block_inside_class_recovery);
+    exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
@@ -4150,6 +4149,28 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "try_block_3")) return false;
     catch_block(b, l + 1);
     return true;
+  }
+
+  /* ********************************************************** */
+  // !end <<errorUntilEndOfLine 'CLASS_BODY_ERROR'>>
+  static boolean unexpected_in_class(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unexpected_in_class")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = unexpected_in_class_0(b, l + 1);
+    r = r && errorUntilEndOfLine(b, l + 1, CLASS_BODY_ERROR);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !end
+  private static boolean unexpected_in_class_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unexpected_in_class_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, END);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */

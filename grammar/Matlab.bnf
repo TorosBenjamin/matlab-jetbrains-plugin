@@ -235,7 +235,9 @@ parameter ::= ident | '~'
 class_declaration ::= classdef br* attributes? br* ident br* super_classes? NEWLINE*
     class_body NEWLINE*
     end { pin=1 }
-private class_body ::= (( properties_block | methods_block | events_block | enumeration_block ) NEWLINE*)* { recoverWhile=not_end_or_oef }
+private class_body ::= (( properties_block | methods_block | events_block | enumeration_block | unexpected_in_class ) NEWLINE*)* { recoverWhile=not_end_or_oef }
+// Anything else in a class body is an error on its own line; parsing continues with the next block.
+private unexpected_in_class ::= !end <<errorUntilEndOfLine 'CLASS_BODY_ERROR'>>
 
 super_classes ::= '<' br* super_classes_list { pin=1 }
 private super_classes_list ::= super_classes_list_item ('&' super_classes_list_item) *
@@ -250,7 +252,7 @@ private not_ampersand_or_super_class_or_properties_or_methods_or_end ::= !( br* 
 
 properties_block ::= properties_token br* attributes? NEWLINE*
     properties_list NEWLINE*
-    end { pin=1 recoverWhile=block_inside_class_recovery }
+    end { pin=1 }
 private properties_token ::= <<parseIdentifierAsKeyword 'PROPERTIES'>>
 attributes ::= <<p_opt_list attribute>>
 attribute ::= [ '~' ] ref_expr [ sep '=' sep expr ] { pin(".*")=2 }
@@ -268,7 +270,7 @@ private block_inside_class_recovery ::= !( NEWLINE*  ( end | methods_token | pro
 
 methods_block ::= methods_token br* attributes? NEWLINE*
     methods_list NEWLINE*
-    end { pin=1 recoverWhile=block_inside_class_recovery }
+    end { pin=1 }
 private methods_token ::= <<parseIdentifierAsKeyword 'METHODS'>>
 methods_list ::= ((function_declaration | method_signature) NEWLINE*)* { recoverWhile=block_inside_class_recovery }
 // Declaration without a body, e.g. for methods defined in separate files: [a, b] = name(obj, x)
@@ -277,7 +279,7 @@ private method_signature_returns ::= (multiple_ret_values | ret_value) br* '='
 
 events_block ::= events_token br* attributes? NEWLINE*
     events_list NEWLINE*
-    end { pin=1 recoverWhile=block_inside_class_recovery }
+    end { pin=1 }
 private events_token ::= <<parseIdentifierAsKeyword 'EVENTS'>>
 events_list ::= (ref_expr NEWLINE*)* { recoverWhile=events_block_body_recovery }
 private events_block_body_recovery ::= !( NEWLINE* end )
@@ -285,7 +287,7 @@ private events_block_body_recovery ::= !( NEWLINE* end )
 enumeration_block ::= enumeration_token NEWLINE*
     ( <<comma_list_item <<enum_item>>>> ( ',' <<comma_list_item <<enum_item>>>> | NEWLINE* enum_item )* ) NEWLINE *
     end
-    { pin=1 recoverWhile=block_inside_class_recovery }
+    { pin=1 }
 private enumeration_token ::= <<parseIdentifierAsKeyword 'ENUMERATION'>>
 enum_item ::= ident arguments?
 

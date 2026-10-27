@@ -6,5 +6,5 @@ package com.github.kornilova203.matlab.stub;
  * (which fails with "Stub count doesn't match stubbed node length").
  */
 public class MatlabIndexVersion {
-    public static final int INDEX_VERSION = 2;  // 2: parser rewrite in 0.9.x
+    public static final int INDEX_VERSION = 3;  // 2: parser rewrite in 0.9.x, 3: class body recovery in 0.14.3
 }

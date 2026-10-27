@@ -24,6 +24,7 @@ import static com.intellij.psi.TokenType.WHITE_SPACE;
 public class MatlabParserUtil extends GeneratedParserUtilBase {
     static final String ALLOW_END_AS_IDENTIFIER = "ALLOW_END_AS_IDENTIFIER";
     static final String NEW_LINE_ALLOWED = "NEW_LINE_ALLOWED";
+    static final String CLASS_BODY_ERROR = "Only properties, methods, events and enumeration blocks are allowed here";
     private static final Key<Object2LongOpenHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
     static final HashSet<IElementType> KEYWORDS = new HashSet<>(Arrays.asList(FUNCTION, END, IF, ELSE, ELSEIF, WHILE,
             SWITCH, CASE, OTHERWISE, FOR, CLASSDEF, TRY, CATCH, GLOBAL, RETURN, CONTINUE, BREAK, SPMD, PARFOR));
@@ -150,6 +151,15 @@ public class MatlabParserUtil extends GeneratedParserUtilBase {
     private static boolean isGluedToNext(PsiBuilder builder) {
         IElementType next = builder.rawLookup(1);
         return next != null && next != WHITE_SPACE && next != NEWLINE;
+    }
+
+    /** Marks the rest of the line as an error with [message]; consumes at least one token. */
+    public static boolean errorUntilEndOfLine(PsiBuilder builder, int level, String message) {
+        if (builder.eof() || builder.getTokenType() == NEWLINE) return false;
+        Marker error = builder.mark();
+        while (!builder.eof() && builder.getTokenType() != NEWLINE) builder.advanceLexer();
+        error.error(message);
+        return true;
     }
 
     public static boolean parseKeywordAsRefExpression(PsiBuilder builder, int level) {

@@ -52,4 +52,9 @@ class ContextCompletionTest : BasePlatformTestCase() {
 
     fun testNormalCodeStillCompletes() =
         assertContainsElements(variants("value = 1;\nx = val<caret>\n"), "value")
+
+    fun testClassBodyOffersOnlyBlocks() {
+        val v = variants("classdef A\n    methods\n    end\n    <caret>\n    methods\n    end\nend\n")
+        assertSameElements(v, "properties", "methods", "events", "enumeration", "end")
+    }
 }

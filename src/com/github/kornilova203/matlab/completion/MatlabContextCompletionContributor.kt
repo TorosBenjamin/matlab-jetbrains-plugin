@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
@@ -38,6 +39,12 @@ class MatlabContextCompletionContributor : CompletionContributor() {
     /** Returns true if the position was handled (the other contributors must not add anything). */
     private fun complete(identifier: PsiElement, result: CompletionResultSet): Boolean {
         val parent = identifier.parent
+        // Directly in a class body only blocks can start.
+        if (parent is PsiErrorElement && parent.parent is MatlabClassDeclaration) {
+            listOf("properties", "methods", "events", "enumeration", "end")
+                .forEach { result.addElement(MatlabKeywordCompletionContributor.keywordElement(it)) }
+            return true
+        }
         if (isNewName(identifier, parent)) {
             blockKeywords(identifier, parent).forEach { result.addElement(MatlabKeywordCompletionContributor.keywordElement(it)) }
             return true
