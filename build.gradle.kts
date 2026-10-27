@@ -1,54 +1,64 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.8.21"
-    id("org.jetbrains.intellij") version "1.14.1"
+    id("org.jetbrains.kotlin.jvm") version "2.4.21"
+    id("org.jetbrains.intellij.platform") version "2.19.0"
 }
 
 group = "com.github.kornilova203"
-version = "0.8.5"
+version = "0.9.0"
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("2023.1.2")
-    type.set("IC") // Target IDE Platform
+dependencies {
+    intellijPlatform {
+        // Community build: the plugin only needs the shared language APIs, and
+        // Ultimate-only startup code breaks the test sandbox.
+        intellijIdeaCommunity("2026.2.3") { useInstaller = false }
+        testFramework(TestFrameworkType.Platform)
+    }
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.opentest4j:opentest4j:1.3.0")
 }
 
-tasks {
-    // Set the JVM compatibility versions
-    withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
 
-    patchPluginXml {
-        sinceBuild.set("231")
-        untilBuild.set("")
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_25)
     }
 }
 
 sourceSets {
     main {
         java.srcDirs("src", "gen")
+        kotlin.srcDirs("src", "gen")
         resources.srcDirs("resources")
     }
     test {
         java.srcDirs("tests")
+        kotlin.srcDirs("tests")
         resources.srcDirs("testData")
     }
 }
 
-
-idea {
-    module {
-        generatedSourceDirs = setOf(file("gen"))
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "252"
+            untilBuild = provider { null }
+        }
     }
+    buildSearchableOptions = false
 }
 

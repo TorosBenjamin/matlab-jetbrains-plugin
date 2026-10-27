@@ -45,8 +45,11 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
     }
 
     private fun <Psi : PsiElement?> resolveIndex(project: Project, indexKey: StubIndexKey<String, Psi>, requiredClass: Class<Psi>, stubs: MutableList<LookupElement>, create: (MatlabDeclaration) -> LookupElement?) {
-        StubIndex.getInstance().processAllKeys(indexKey, project) { key ->
-            StubIndex.getInstance().processElements(indexKey, key, project, GlobalSearchScope.projectScope(project), requiredClass) { psiElement ->
+        // Collect keys first: querying the index while iterating its keys can deadlock.
+        val scope = GlobalSearchScope.projectScope(project)
+        val keys = StubIndex.getInstance().getAllKeys(indexKey, project)
+        for (key in keys) {
+            StubIndex.getInstance().processElements(indexKey, key, project, scope, requiredClass) { psiElement ->
                 if (psiElement is MatlabDeclaration && psiElement.name + ".m" == psiElement.containingFile.name) {
                     val element = create(psiElement)
                     if (element != null) {

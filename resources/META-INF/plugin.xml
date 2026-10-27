@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>MatlabSupport</id>
-    <name>Matlab Support</name>
+    <name>Matlab Support (fork)</name>
 
     <vendor url="https://github.com/kornilova203" email="kornilova203@gmail.com">Liudmila Kornilova</vendor>
 
@@ -11,18 +11,14 @@
 
     <change-notes><![CDATA[
     <ol>
-        <li>Fix compatibility problems</li>
+        <li>Build for IntelliJ 2025.2+ (IntelliJ Platform Gradle Plugin 2.x, Kotlin 2.4)</li>
+        <li>Removed daily update-check ping</li>
+        <li>Fixed possible deadlock in code completion</li>
     </ol>
     ]]>
     </change-notes>
 
     <depends>com.intellij.modules.lang</depends>
-
-    <application-components>
-        <component>
-            <implementation-class>com.github.kornilova203.matlab.MatlabUpdateComponent</implementation-class>
-        </component>
-    </application-components>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Matlab" fieldName="INSTANCE" extensions="m" language="Matlab"
