@@ -150,4 +150,9 @@ class AnnotatorTest : BasePlatformTestCase() {
         listOf("x", "y", "x", "y", "x", "t", "fh", "r", "q", "s", "out", "out"),
         coloredWith(calls, MatlabAnnotator.ID)
     )
+
+    fun testFunctionHandleAt() = assertEquals(
+        listOf("@", "(", ")", "@"),
+        coloredWith("sq = @(n) n.^2;\nfh = @add_numbers;\n", MatlabAnnotator.LAMBDA_PARENTH)
+    )
 }

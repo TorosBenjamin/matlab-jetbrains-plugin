@@ -34,7 +34,7 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Command argument (hold on)", MatlabAnnotator.COMMAND_ARGUMENT),
         AttributesDescriptor("Function declaration", MatlabAnnotator.FUNCTION_DECLARATION),
         AttributesDescriptor("Class declaration", MatlabAnnotator.CLASS_DECLARATION),
-        AttributesDescriptor("Anonymous function @(...)", MatlabAnnotator.LAMBDA_PARENTH),
+        AttributesDescriptor("Function handle @(...) / @name", MatlabAnnotator.LAMBDA_PARENTH),
         AttributesDescriptor("Bad character", MatlabSyntaxHighlighter.BAD_CHARACTER),
     )
 
@@ -87,7 +87,8 @@ class MatlabColorSettingsPage : ColorSettingsPage {
             end
         end
 
-        <id>sq</id> = <at>@(</at><id>x</id><at>)</at> <id>x</id>.^2;
+        <id>sq</id> = <at>@(</at><param>x</param><at>)</at> <param>x</param>.^2;
+        <id>fh</id> = <at>@</at><fcall>disp</fcall>;
         <id>msg</id> = <fcall>sprintf</fcall>('total: %d\n', 42);
         <id>s</id> = "a string";
         <id>m</id> = [1 2; 3 4]';

@@ -54,7 +54,8 @@ class MatlabAnnotator : Annotator {
     override fun annotate(el: PsiElement, holder: AnnotationHolder) {
         val type = el.node.elementType
         val attrs = when {
-            type == AT && el.parent is MatlabLambdaExpr -> LAMBDA_PARENTH
+            // @ of function handles: @(x) x.^2 and @name
+            type == AT && (el.parent is MatlabLambdaExpr || el.parent is MatlabFunctionRefExpr) -> LAMBDA_PARENTH
             (type == LPARENTH || type == RPARENTH) &&
                     el.parent is MatlabParameters && el.parent.parent is MatlabLambdaExpr  -> LAMBDA_PARENTH
             type == IDENTIFIER && el.parent is MatlabFunctionDeclaration                   -> FUNCTION_DECLARATION
