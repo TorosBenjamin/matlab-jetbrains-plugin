@@ -22,7 +22,7 @@ abstract class MatlabPropertyMixin(node: ASTNode): MatlabASTWrapperPsiElement(no
     override fun getTextOffset(): Int = nameIdentifier?.node?.startOffset ?: super.getTextOffset()
 
     override fun getType(): MatlabType {
-        val expr = className?.refExpr
+        val expr = className?.refExprList?.lastOrNull()  // Point in geometry.Point
         return if (expr is MatlabTypedExpr) expr.getType() else MatlabTypeUnknown()
     }
 }

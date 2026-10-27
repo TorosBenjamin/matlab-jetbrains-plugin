@@ -10,4 +10,7 @@ public interface MatlabMethodsList extends PsiElement {
   @NotNull
   List<MatlabFunctionDeclaration> getFunctionDeclarationList();
 
+  @NotNull
+  List<MatlabMethodSignature> getMethodSignatureList();
+
 }

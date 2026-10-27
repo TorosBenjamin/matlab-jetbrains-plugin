@@ -82,7 +82,7 @@ LINE_HASH_COMMENT=#.*
 BLOCK_HASH_COMMENT_PREFIX={WHITE_SPACE}* "#{" {WHITE_SPACE}*
 BLOCK_HASH_COMMENT_SUFFIX={WHITE_SPACE}* "#}" {WHITE_SPACE}*
 FLOAT=(([\d]*\.[\d]+)|([\d]+\.))i?
-FLOAT_EXPONENTIAL=(([\d]*\.[\d]+)|([\d]+\.)|\d+)e[\+-]?[\d]+i?
+FLOAT_EXPONENTIAL=(([\d]*\.[\d]+)|([\d]+\.)|\d+)[eEdD][\+-]?[\d]+i?
 IDENTIFIER = [:jletter:] [:jletterdigit:]*
 INTEGER=[0-9]+[ijIJ]?
 
@@ -100,6 +100,7 @@ SINGLE_QUOTE_EXCAPE_SEQUENCE=\\[\\bfnrt]|''
 %state LOOK_FOR_LINECOMMENT
 %state LINECOMMENT_STATE
 %state FILE_NAME_STATE
+%state AFTER_DOT
 
 %%
 <YYINITIAL,WS_MATTERS,LOOK_FOR_CTRANS> {
@@ -151,7 +152,7 @@ SINGLE_QUOTE_EXCAPE_SEQUENCE=\\[\\bfnrt]|''
 
   "("                   { startWsDoesNotMatter(); return LPARENTH; }
   ")"                   { stopWsDoesNotMatter(); lookForCtrans(); return RPARENTH; }
-  "."                   { stopLookForCtrans(); return DOT; }
+  "."                   { stopLookForCtrans(); yypushState(AFTER_DOT); return DOT; }
   "<="                  { stopLookForCtrans(); return LESS_OR_EQUAL; }
   "-"                   { stopLookForCtrans(); return MINUS; }
   "--"                  { stopLookForCtrans(); return MINUSMINUS; }
@@ -250,6 +251,12 @@ SINGLE_QUOTE_EXCAPE_SEQUENCE=\\[\\bfnrt]|''
     <<EOF>>                  { yyclearStack(); yybegin(YYINITIAL); return COMMENT; }
 
     [^]                      {  }
+}
+
+/* A word after a dot is a field or method name, never a keyword or command (s.end, opt.ls). */
+<AFTER_DOT> {
+    {IDENTIFIER}      { yypopState(); lookForCtrans(); return IDENTIFIER; }
+    [^]               { yypushback(yylength()); yypopState(); }
 }
 
 <FILE_NAME_STATE> {

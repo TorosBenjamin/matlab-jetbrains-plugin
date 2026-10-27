@@ -13,8 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 import static com.github.kornilova203.matlab.psi.MatlabTypes.*;
+import static com.intellij.psi.TokenType.WHITE_SPACE;
 
 /**
  * @author Liudmila Kornilova
@@ -92,6 +94,59 @@ public class MatlabParserUtil extends GeneratedParserUtilBase {
         Object2LongOpenHashMap<String> flags = builder.getUserData(MODES_KEY);
         if (flags == null) builder.putUserData(MODES_KEY, flags = new Object2LongOpenHashMap<>());
         return flags;
+    }
+
+    private static final java.util.Set<String> ARGUMENTS_BLOCK_KINDS = java.util.Set.of("Input", "Output", "Repeating");
+
+    /** `arguments` followed by end of line or by (Input|Output|Repeating) starts a block; otherwise it's a variable. */
+    public static boolean isArgumentsBlockStart(PsiBuilder builder, int level) {
+        if (builder.getTokenType() != IDENTIFIER || !"arguments".equals(builder.getTokenText())) return false;
+        IElementType next = builder.lookAhead(1);
+        if (next == null || next == NEWLINE) return true;
+        if (next != LPARENTH) return false;
+        Marker probe = builder.mark();
+        try {
+            builder.advanceLexer();
+            builder.advanceLexer();
+            if (builder.getTokenType() != IDENTIFIER || !ARGUMENTS_BLOCK_KINDS.contains(builder.getTokenText())) return false;
+            builder.advanceLexer();
+            return builder.getTokenType() == RPARENTH;
+        } finally {
+            probe.rollbackTo();
+        }
+    }
+
+    private static final Set<IElementType> COMMAND_START_TOKENS = new HashSet<>(Arrays.asList(
+            IDENTIFIER, INTEGER, FLOAT, FLOAT_EXPONENTIAL, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, CTRANS));
+    /** Tokens that start a command argument only when glued to the next token: -O, *.m, ../lib, /tmp */
+    private static final Set<IElementType> COMMAND_START_PREFIXES = new HashSet<>(Arrays.asList(
+            MINUS, MUL, DOT, DOT_RDIV, RDIV, LDIV));
+
+    /**
+     * Consumes the rest of a command syntax statement (`hold on`, `addpath ../lib`).
+     * Called right after the command name; succeeds only if the name is followed by whitespace
+     * and then something that can't continue an expression.
+     */
+    public static boolean parseCommandArguments(PsiBuilder builder, int level) {
+        if (builder.rawLookup(-1) != WHITE_SPACE) return false;
+        IElementType type = builder.getTokenType();
+        boolean isCommand = COMMAND_START_TOKENS.contains(type) ||
+                (COMMAND_START_PREFIXES.contains(type) && isGluedToNext(builder));
+        if (!isCommand) return false;
+        boolean inQuote = false;  // 'quoted text' after a space is lexed as transpose tokens
+        while (!builder.eof()) {
+            type = builder.getTokenType();
+            if (!inQuote && (type == NEWLINE || type == SEMICOLON || type == COMMA)) break;
+            if (type == NEWLINE) break;
+            if (type == CTRANS || type == TRANS) inQuote = !inQuote;
+            builder.advanceLexer();
+        }
+        return true;
+    }
+
+    private static boolean isGluedToNext(PsiBuilder builder) {
+        IElementType next = builder.rawLookup(1);
+        return next != null && next != WHITE_SPACE && next != NEWLINE;
     }
 
     public static boolean parseKeywordAsRefExpression(PsiBuilder builder, int level) {

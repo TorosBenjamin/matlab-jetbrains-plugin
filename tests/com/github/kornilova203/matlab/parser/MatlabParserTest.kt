@@ -14,6 +14,12 @@ open class MatlabParserTest : ParsingTestCase("", "m", MatlabParserDefinition())
 
     fun doTest() = doTest(true)
 
+    /** Snapshot test that also fails on any parse error. */
+    private fun doTestNoErrors() {
+        doTest(true)
+        ensureNoErrorElements()
+    }
+
     fun testNumbers() = doTest()
     fun testFileOperations() = doTest()
     fun testWhileLoop() = doTest()
@@ -41,4 +47,10 @@ open class MatlabParserTest : ParsingTestCase("", "m", MatlabParserDefinition())
     fun testControlExpression() = doTest()
     fun testSpmd() = doTest()
     fun testParfor() = doTest()
+    fun testQualifiedClassNames() = doTestNoErrors()
+    fun testArgumentsBlock() = doTestNoErrors()
+    fun testPersistent() = doTestNoErrors()
+    fun testMethodSignatures() = doTestNoErrors()
+    fun testCommandSyntax() = doTestNoErrors()
+    fun testFieldNamedLikeCommand() = doTestNoErrors()
 }

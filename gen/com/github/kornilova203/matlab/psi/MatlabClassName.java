@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface MatlabClassName extends PsiElement {
 
   @NotNull
-  MatlabRefExpr getRefExpr();
+  List<MatlabRefExpr> getRefExprList();
 
 }

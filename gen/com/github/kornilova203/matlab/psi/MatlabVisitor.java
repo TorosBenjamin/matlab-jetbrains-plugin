@@ -15,7 +15,19 @@ public class MatlabVisitor extends PsiElementVisitor {
     visitBinaryExpr(o);
   }
 
+  public void visitArgumentValidation(@NotNull MatlabArgumentValidation o) {
+    visitPsiElement(o);
+  }
+
+  public void visitArgumentValidationList(@NotNull MatlabArgumentValidationList o) {
+    visitPsiElement(o);
+  }
+
   public void visitArguments(@NotNull MatlabArguments o) {
+    visitPsiElement(o);
+  }
+
+  public void visitArgumentsBlock(@NotNull MatlabArgumentsBlock o) {
     visitPsiElement(o);
   }
 
@@ -72,6 +84,14 @@ public class MatlabVisitor extends PsiElementVisitor {
   }
 
   public void visitClassName(@NotNull MatlabClassName o) {
+    visitPsiElement(o);
+  }
+
+  public void visitCommandArguments(@NotNull MatlabCommandArguments o) {
+    visitPsiElement(o);
+  }
+
+  public void visitCommandStatement(@NotNull MatlabCommandStatement o) {
     visitPsiElement(o);
   }
 
@@ -227,6 +247,10 @@ public class MatlabVisitor extends PsiElementVisitor {
     visitBinaryExpr(o);
   }
 
+  public void visitMethodSignature(@NotNull MatlabMethodSignature o) {
+    visitPsiElement(o);
+  }
+
   public void visitMethodsBlock(@NotNull MatlabMethodsBlock o) {
     visitPsiElement(o);
   }
@@ -284,6 +308,10 @@ public class MatlabVisitor extends PsiElementVisitor {
   }
 
   public void visitParforLoopRange(@NotNull MatlabParforLoopRange o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPersistentVariable(@NotNull MatlabPersistentVariable o) {
     visitPsiElement(o);
   }
 

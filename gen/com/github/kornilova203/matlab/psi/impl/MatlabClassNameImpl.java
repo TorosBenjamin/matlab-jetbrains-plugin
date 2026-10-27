@@ -29,8 +29,8 @@ public class MatlabClassNameImpl extends MatlabASTWrapperPsiElement implements M
 
   @Override
   @NotNull
-  public MatlabRefExpr getRefExpr() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabRefExpr.class));
+  public List<MatlabRefExpr> getRefExprList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MatlabRefExpr.class);
   }
 
 }

@@ -14,6 +14,9 @@ public interface MatlabTypes {
   IElementType ALL_ITEMS_RANGE = new MatlabElementType("ALL_ITEMS_RANGE");
   IElementType AND_EXPR = new MatlabElementType("AND_EXPR");
   IElementType ARGUMENTS = new MatlabElementType("ARGUMENTS");
+  IElementType ARGUMENTS_BLOCK = new MatlabElementType("ARGUMENTS_BLOCK");
+  IElementType ARGUMENT_VALIDATION = new MatlabElementType("ARGUMENT_VALIDATION");
+  IElementType ARGUMENT_VALIDATION_LIST = new MatlabElementType("ARGUMENT_VALIDATION_LIST");
   IElementType ASSIGN_EXPR = new MatlabElementType("ASSIGN_EXPR");
   IElementType ATTRIBUTE = new MatlabElementType("ATTRIBUTE");
   IElementType ATTRIBUTES = new MatlabElementType("ATTRIBUTES");
@@ -27,6 +30,8 @@ public interface MatlabTypes {
   IElementType CELL_ARRAY_ROW = new MatlabElementType("CELL_ARRAY_ROW");
   IElementType CLASS_DECLARATION = new MatlabClassDeclarationElementType("CLASS_DECLARATION");
   IElementType CLASS_NAME = new MatlabElementType("CLASS_NAME");
+  IElementType COMMAND_ARGUMENTS = new MatlabElementType("COMMAND_ARGUMENTS");
+  IElementType COMMAND_STATEMENT = new MatlabElementType("COMMAND_STATEMENT");
   IElementType CONDITION = new MatlabElementType("CONDITION");
   IElementType CONTROL_EXPR = new MatlabElementType("CONTROL_EXPR");
   IElementType CTRANSPOSE_EXPR = new MatlabElementType("CTRANSPOSE_EXPR");
@@ -67,6 +72,7 @@ public interface MatlabTypes {
   IElementType META_CLASS_EXPR = new MatlabElementType("META_CLASS_EXPR");
   IElementType METHODS_BLOCK = new MatlabElementType("METHODS_BLOCK");
   IElementType METHODS_LIST = new MatlabElementType("METHODS_LIST");
+  IElementType METHOD_SIGNATURE = new MatlabElementType("METHOD_SIGNATURE");
   IElementType MINUS_EXPR = new MatlabElementType("MINUS_EXPR");
   IElementType MORE_EXPR = new MatlabElementType("MORE_EXPR");
   IElementType MORE_OR_EQUAL_EXPR = new MatlabElementType("MORE_OR_EQUAL_EXPR");
@@ -79,6 +85,7 @@ public interface MatlabTypes {
   IElementType PAREN_EXPR = new MatlabElementType("PAREN_EXPR");
   IElementType PARFOR_LOOP = new MatlabElementType("PARFOR_LOOP");
   IElementType PARFOR_LOOP_RANGE = new MatlabElementType("PARFOR_LOOP_RANGE");
+  IElementType PERSISTENT_VARIABLE = new MatlabElementType("PERSISTENT_VARIABLE");
   IElementType PLUS_EXPR = new MatlabElementType("PLUS_EXPR");
   IElementType POW_EXPR = new MatlabElementType("POW_EXPR");
   IElementType PROPERTIES_BLOCK = new MatlabElementType("PROPERTIES_BLOCK");
@@ -195,6 +202,15 @@ public interface MatlabTypes {
       else if (type == ARGUMENTS) {
         return new MatlabArgumentsImpl(node);
       }
+      else if (type == ARGUMENTS_BLOCK) {
+        return new MatlabArgumentsBlockImpl(node);
+      }
+      else if (type == ARGUMENT_VALIDATION) {
+        return new MatlabArgumentValidationImpl(node);
+      }
+      else if (type == ARGUMENT_VALIDATION_LIST) {
+        return new MatlabArgumentValidationListImpl(node);
+      }
       else if (type == ASSIGN_EXPR) {
         return new MatlabAssignExprImpl(node);
       }
@@ -233,6 +249,12 @@ public interface MatlabTypes {
       }
       else if (type == CLASS_NAME) {
         return new MatlabClassNameImpl(node);
+      }
+      else if (type == COMMAND_ARGUMENTS) {
+        return new MatlabCommandArgumentsImpl(node);
+      }
+      else if (type == COMMAND_STATEMENT) {
+        return new MatlabCommandStatementImpl(node);
       }
       else if (type == CONDITION) {
         return new MatlabConditionImpl(node);
@@ -351,6 +373,9 @@ public interface MatlabTypes {
       else if (type == METHODS_LIST) {
         return new MatlabMethodsListImpl(node);
       }
+      else if (type == METHOD_SIGNATURE) {
+        return new MatlabMethodSignatureImpl(node);
+      }
       else if (type == MINUS_EXPR) {
         return new MatlabMinusExprImpl(node);
       }
@@ -386,6 +411,9 @@ public interface MatlabTypes {
       }
       else if (type == PARFOR_LOOP_RANGE) {
         return new MatlabParforLoopRangeImpl(node);
+      }
+      else if (type == PERSISTENT_VARIABLE) {
+        return new MatlabPersistentVariableImpl(node);
       }
       else if (type == PLUS_EXPR) {
         return new MatlabPlusExprImpl(node);

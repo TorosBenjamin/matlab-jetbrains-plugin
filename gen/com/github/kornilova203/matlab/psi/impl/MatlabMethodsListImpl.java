@@ -33,4 +33,10 @@ public class MatlabMethodsListImpl extends MatlabASTWrapperPsiElement implements
     return PsiTreeUtil.getChildrenOfTypeAsList(this, MatlabFunctionDeclaration.class);
   }
 
+  @Override
+  @NotNull
+  public List<MatlabMethodSignature> getMethodSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, MatlabMethodSignature.class);
+  }
+
 }

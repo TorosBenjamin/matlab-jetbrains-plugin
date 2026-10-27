@@ -10,4 +10,6 @@ public interface MatlabElementTypes {
     MatlabElementType PROPERTIES  = new MatlabElementType("properties");
     MatlabElementType EVENTS      = new MatlabElementType("events");
     MatlabElementType ENUMERATION = new MatlabElementType("enumeration");
+    MatlabElementType PERSISTENT  = new MatlabElementType("persistent");
+    MatlabElementType ARGUMENTS_KEYWORD = new MatlabElementType("arguments");
 }
