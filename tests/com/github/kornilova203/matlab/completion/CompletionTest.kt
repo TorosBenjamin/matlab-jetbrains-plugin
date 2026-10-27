@@ -20,6 +20,17 @@ class CompletionTest : BasePlatformTestCase() {
     fun testNumber() = doTest()
     fun testNumberDot() = doTest()
     fun testWhile() = doTest("function", "for", "classdef", "if", "end", "while", "return", "continue", "break")
+    // Show the list even when only one keyword fits (e.g. `end` in a properties block).
+    override fun setUp() {
+        super.setUp()
+        com.intellij.codeInsight.CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    }
+
+    override fun tearDown() {
+        com.intellij.codeInsight.CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true
+        super.tearDown()
+    }
+
     fun testPackage() = doTest("apputil", "engine", "exception", "lang", "system", "unittest")
     fun testClass() = doTest("properties", "methods", "events", "enumeration", "end")
     fun testClassName() = doTestMultiFile("ClassNameAdd")

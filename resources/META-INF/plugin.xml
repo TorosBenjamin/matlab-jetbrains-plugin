@@ -22,6 +22,8 @@
         <li>Colors for properties, constants, types, attributes, events; obj.method without () recognized; obj. completes class members</li>
         <li>Nested functions see the outer function's variables (no false "unused variable")</li>
         <li>Function call color (disp(x), helper(3), hold on, @f); indexing a variable keeps the variable color</li>
+        <li>Auto-insert end, fold %% sections, breadcrumbs</li>
+        <li>Completion depends on position: nothing for new names, attribute names/values, types, validators</li>
     </ol>
     ]]>
     </change-notes>
@@ -47,6 +49,8 @@
                         implementationClass="com.github.kornilova203.matlab.editor.actions.MatlabCommentHandler"/>
         <quoteHandler fileType="Matlab" className="com.github.kornilova203.matlab.editor.actions.MatlabQuoteHandler"/>
 
+        <completion.contributor language="Matlab" order="first"
+                                implementationClass="com.github.kornilova203.matlab.completion.MatlabContextCompletionContributor"/>
         <completion.contributor language="Matlab"
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabKeywordCompletionContributor"/>
         <completion.contributor language="Matlab"
