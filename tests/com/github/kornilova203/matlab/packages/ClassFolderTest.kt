@@ -42,3 +42,37 @@ class ClassFolderTest : BasePlatformTestCase() {
         assertEquals("area.m", (target as MatlabFunctionDeclaration).containingFile.name)
     }
 }
+
+class MethodSignatureNavigationTest : BasePlatformTestCase() {
+    private fun setUpClass(): com.intellij.psi.PsiFile {
+        myFixture.addFileToProject("@Shape/area.m", "function a = area(obj)\na = 1;\nend\n")
+        return myFixture.addFileToProject("@Shape/Shape.m", "classdef Shape\n    methods\n        a = area(obj)\n    end\nend\n")
+    }
+
+    fun testCtrlClickOpensMethodFile() {
+        val classFile = setUpClass()
+        myFixture.configureFromExistingVirtualFile(classFile.virtualFile)
+        val target = myFixture.file.findReferenceAt(classFile.text.indexOf("area(obj)") + 1)?.resolve()
+        assertEquals("area.m", target?.containingFile?.name)
+    }
+
+    fun testRenamingMethodUpdatesSignature() {
+        val classFile = setUpClass()
+        val methodFile = myFixture.findFileInTempDir("@Shape/area.m")
+        myFixture.configureFromExistingVirtualFile(methodFile)
+        myFixture.editor.caretModel.moveToOffset(myFixture.file.text.indexOf("area(obj)") + 1)
+        myFixture.renameElementAtCaretUsingHandler("surface")
+        assertTrue(classFile.text, classFile.text.contains("a = surface(obj)"))
+        assertEquals("surface.m", myFixture.file.name)
+    }
+
+    fun testSignatureIsNotCountedAsUsage() {
+        val classFile = setUpClass()
+        myFixture.addFileToProject("main.m", "s = Shape();\nx = s.area();\n")
+        val method = myFixture.psiManager.findFile(myFixture.findFileInTempDir("@Shape/area.m"))!!
+            .children.filterIsInstance<MatlabFunctionDeclaration>().first()
+        assertEquals("1 usage", com.github.kornilova203.matlab.codeVision.MatlabUsagesCodeVisionProvider()
+            .getHint(method, method.containingFile))
+        assertNotNull(classFile)
+    }
+}

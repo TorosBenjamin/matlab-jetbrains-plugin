@@ -50,8 +50,9 @@ class MatlabUsagesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
         fun countUsages(element: PsiElement): Int {
             val count = AtomicInteger()
-            ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.project)).forEach { _ ->
-                count.incrementAndGet() < LIMIT
+            ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.project)).forEach { ref ->
+                // A classdef signature declares the method rather than using it.
+                ref is MatlabMethodSignatureReference || count.incrementAndGet() < LIMIT
             }
             return count.get()
         }
