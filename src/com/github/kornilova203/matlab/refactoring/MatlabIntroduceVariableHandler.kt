@@ -19,7 +19,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.CommonRefactoringUtil
 
 class MatlabIntroduceVariableHandler : RefactoringActionHandler {
@@ -203,7 +203,7 @@ class MatlabIntroduceVariableHandler : RefactoringActionHandler {
         while (element != null && element !is MatlabRefExpr) {
             element = element.parent
         }
-        return element as? MatlabRefExpr
+        return element
     }
 
     private fun getText(element: PsiElement) : String {

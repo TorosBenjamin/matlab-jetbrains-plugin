@@ -12,7 +12,6 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SyntaxTraverser.psiTraverser
 
 /**
  * @author Liudmila Kornilova
@@ -26,25 +25,22 @@ class MatlabAnnotator : Annotator {
         val ID = createTextAttributesKey("MATLAB.ID", DefaultLanguageHighlighterColors.IDENTIFIER)
     }
 
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        psiTraverser().withRoot(element).forEach { el ->
-            val type = el.node.elementType
-            val attrs = when {
-                type == AT && el.parent is MatlabLambdaExpr -> LAMBDA_PARENTH
-                (type == LPARENTH || type == RPARENTH) &&
-                        el.parent is MatlabParameters && el.parent.parent is MatlabLambdaExpr  -> LAMBDA_PARENTH
-                type == IDENTIFIER && el.parent is MatlabFunctionDeclaration                   -> FUNCTION_DECLARATION
-                type == IDENTIFIER && el.parent is MatlabClassDeclaration                      -> CLASS_DECLARATION
-                type == METHODS || type == EVENTS || type == PROPERTIES || type == ENUMERATION -> KEYWORD
-                type == IDENTIFIER                                                             -> ID
-                else -> null
-            }
-            if (attrs != null) {
-                holder.newAnnotation(HighlightSeverity.INFORMATION, "")
-                    .range(el)
-                    .textAttributes(attrs)
-                    .create()
-            }
-        }
+    // Called once per PSI element (leaves included), so only look at the element itself.
+    override fun annotate(el: PsiElement, holder: AnnotationHolder) {
+        val type = el.node.elementType
+        val attrs = when {
+            type == AT && el.parent is MatlabLambdaExpr -> LAMBDA_PARENTH
+            (type == LPARENTH || type == RPARENTH) &&
+                    el.parent is MatlabParameters && el.parent.parent is MatlabLambdaExpr  -> LAMBDA_PARENTH
+            type == IDENTIFIER && el.parent is MatlabFunctionDeclaration                   -> FUNCTION_DECLARATION
+            type == IDENTIFIER && el.parent is MatlabClassDeclaration                      -> CLASS_DECLARATION
+            type == METHODS || type == EVENTS || type == PROPERTIES || type == ENUMERATION -> KEYWORD
+            type == IDENTIFIER                                                             -> ID
+            else -> null
+        } ?: return
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+            .range(el)
+            .textAttributes(attrs)
+            .create()
     }
 }

@@ -7,44 +7,41 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.util.execution.ParametersListUtil
+import java.io.File
 
 
 class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguration, environment: ExecutionEnvironment)
     : CommandLineState(environment) {
 
     override fun startProcess(): ProcessHandler {
-        val workingDir = findWorkingDir(runConfiguration)
-        val cmd = createCommandLine(workingDir, runConfiguration)
-
-        val processHandler = KillableColoredProcessHandler(cmd)
+        val workingDir = ProgramParametersUtil.getWorkingDir(runConfiguration, runConfiguration.project, null)
+        val processHandler = KillableColoredProcessHandler(createCommandLine(workingDir, runConfiguration))
         ProcessTerminatedListener.attach(processHandler, environment.project)
-
-        // FIXME: handle path macros
         return processHandler
     }
 
-    private fun createCommandLine(workingDir: String, runConfiguration: MatlabRunConfiguration): GeneralCommandLine {
-        val cmd = GeneralCommandLine()
-        val interpreter = runConfiguration.getInterpreterPath()!!
-        cmd.exePath = interpreter
+    companion object {
+        internal fun createCommandLine(workingDir: String, runConfiguration: MatlabRunConfiguration): GeneralCommandLine {
+            val interpreter = runConfiguration.getInterpreterPath()!!
+            val cmd = GeneralCommandLine().withExePath(interpreter)
 
-        if (!runConfiguration.getInterpreterOptions().isNullOrBlank()) {
-            cmd.addParameters(runConfiguration.getInterpreterOptions()!!.split(" "))
+            runConfiguration.getInterpreterOptions()?.let { cmd.addParameters(ParametersListUtil.parse(it)) }
+
+            // Quotes inside a MATLAB char literal are escaped by doubling them.
+            val file = runConfiguration.getFilePath()!!.replace("'", "''")
+            // Keep the process alive while figure windows are open.
+            val code = "run('$file'); if ~isempty(get(0, 'Children')), uiwait; end"
+            cmd.addParameters(if (isOctave(interpreter)) "--eval" else "-batch", code)
+
+            return cmd.withWorkDirectory(workingDir)
+                .withParentEnvironmentType(
+                    if (runConfiguration.isPassParentEnvs) GeneralCommandLine.ParentEnvironmentType.CONSOLE
+                    else GeneralCommandLine.ParentEnvironmentType.NONE
+                )
+                .withEnvironment(runConfiguration.envs)
         }
 
-        if (interpreter.contains("matlab")) {
-            cmd.addParameters("-batch",  "run('${runConfiguration.getFilePath()}'); if ~isempty(groot().Children) uiwait; end;")
-        } else {
-            cmd.addParameters("--eval", "run('${runConfiguration.getFilePath()}'); uiwait;")
-        }
-
-        cmd.withWorkDirectory(workingDir)
-        cmd.withParentEnvironmentType(if (runConfiguration.isPassParentEnvs) GeneralCommandLine.ParentEnvironmentType.CONSOLE else GeneralCommandLine.ParentEnvironmentType.NONE)
-        cmd.withEnvironment(runConfiguration.envs)
-        return cmd
-    }
-
-    private fun findWorkingDir(runConfig: MatlabRunConfiguration): String {
-        return ProgramParametersUtil.getWorkingDir(runConfig, runConfig.project, null)
+        private fun isOctave(interpreter: String): Boolean = File(interpreter).name.lowercase().contains("octave")
     }
 }

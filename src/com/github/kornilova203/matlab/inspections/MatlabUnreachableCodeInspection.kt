@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parents
 import kotlin.collections.HashSet
 
 class MatlabUnreachableCodeInspection : LocalInspectionTool() {
@@ -30,7 +29,7 @@ class MatlabUnreachableCodeInspection : LocalInspectionTool() {
                         if (element == null) {
                             continue
                         }
-                        if (!element.parents.any {unreachable.contains(it)}) {
+                        if (!generateSequence(element.parent) { if (it is PsiFile) null else it.parent }.any {unreachable.contains(it)}) {
                             holder.registerProblem(element, "Unreachable code")
                         }
                     }

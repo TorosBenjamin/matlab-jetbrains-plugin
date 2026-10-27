@@ -18,22 +18,26 @@ import com.intellij.psi.tree.IElementType
 
 class MatlabSyntaxHighlighter : SyntaxHighlighterBase() {
     companion object {
-        private val COMMENT = createTextAttributesKey("SIMPLE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
-        private val BAD_CHARACTER = createTextAttributesKey("SIMPLE_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER)
-        private val STRING = createTextAttributesKey("STRING", DefaultLanguageHighlighterColors.STRING)
-        private val SEMICOLON = createTextAttributesKey("SEMICOLON", DefaultLanguageHighlighterColors.SEMICOLON)
-        private val ID = createTextAttributesKey("ID", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
-        private val KEYWORD = createTextAttributesKey("KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
+        val COMMENT = createTextAttributesKey("MATLAB.COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
+        val BAD_CHARACTER = createTextAttributesKey("MATLAB.BAD_CHARACTER", HighlighterColors.BAD_CHARACTER)
+        val STRING = createTextAttributesKey("MATLAB.STRING", DefaultLanguageHighlighterColors.STRING)
+        val SEMICOLON = createTextAttributesKey("MATLAB.SEMICOLON", DefaultLanguageHighlighterColors.SEMICOLON)
+        val ID = createTextAttributesKey("MATLAB.VARIABLE", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
+        val KEYWORD = createTextAttributesKey("MATLAB.KEYWORD_TOKEN", DefaultLanguageHighlighterColors.KEYWORD)
+
+        val NUMBER = createTextAttributesKey("MATLAB.NUMBER", DefaultLanguageHighlighterColors.NUMBER)
+        val STRING_ESCAPE = createTextAttributesKey("MATLAB.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE)
+        val INVALID_ESCAPE = createTextAttributesKey("MATLAB.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE)
 
         private val BAD_CHAR_KEYS: Array<TextAttributesKey> = arrayOf(BAD_CHARACTER)
-        private val VALID_STRING_ESCAPE_KEYS: Array<TextAttributesKey> = arrayOf(VALID_STRING_ESCAPE)
-        private val INVALID_STRING_ESCAPE_KEYS: Array<TextAttributesKey> = arrayOf(INVALID_STRING_ESCAPE)
+        private val VALID_STRING_ESCAPE_KEYS: Array<TextAttributesKey> = arrayOf(STRING_ESCAPE)
+        private val INVALID_STRING_ESCAPE_KEYS: Array<TextAttributesKey> = arrayOf(INVALID_ESCAPE)
         private val COMMENT_KEYS: Array<TextAttributesKey> = arrayOf(COMMENT)
         private val STRING_KEYS: Array<TextAttributesKey> = arrayOf(STRING)
         private val SEMICOLON_KEYS: Array<TextAttributesKey> = arrayOf(SEMICOLON)
         private val KEYWORD_KEYS: Array<TextAttributesKey> = arrayOf(KEYWORD)
         private val ID_KEYS: Array<TextAttributesKey> = arrayOf(ID)
-        private val NUMBER_KEYS: Array<TextAttributesKey> = arrayOf(DefaultLanguageHighlighterColors.NUMBER)
+        private val NUMBER_KEYS: Array<TextAttributesKey> = arrayOf(NUMBER)
         private val EMPTY_KEYS = arrayOf<TextAttributesKey>()
     }
 

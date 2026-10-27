@@ -13,7 +13,7 @@ class MatlabTypeProvider : ExpressionTypeProvider<PsiElement>() {
         return type.getName()
     }
 
-    override fun getExpressionsAt(elementAt: PsiElement): MutableList<PsiElement> {
+    override fun getExpressionsAt(elementAt: PsiElement): List<PsiElement> {
         return SyntaxTraverser.psiApi()
                 .parents(elementAt)
                 .takeWhile { it !is PsiFile }

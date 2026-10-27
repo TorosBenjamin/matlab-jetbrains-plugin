@@ -89,7 +89,7 @@ class MatlabUnusedVariableInspectionVisitor(private val holder: ProblemsHolder) 
         val refs = getReferences(declaration)
         if (!refs.isEmpty()) return
         holder.registerProblem(selectedElement ?: declaration.identifyingElement ?: declaration,
-                "${name.capitalize()} '${declaration.name}' is never used",
+                "${name.replaceFirstChar { it.uppercase() }} '${declaration.name}' is never used",
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 object : LocalQuickFixOnPsiElement(declaration) {
                     override fun getFamilyName(): String = "Remove $name"

@@ -15,7 +15,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfTypes
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.CommonRefactoringUtil
 
 class MatlabInlineVariableHandler : InlineActionHandler() {

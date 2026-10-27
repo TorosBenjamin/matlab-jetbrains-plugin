@@ -6,30 +6,25 @@ import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
-import java.util.*
 
 class MatlabDocumentationProvider : DocumentationProvider {
     override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
-        return getDeclaration(element, originalElement)
+        return getDeclaration(element, originalElement)?.let(::escape)
     }
 
-    override fun getUrlFor(element: PsiElement?, originalElement: PsiElement?): List<String?>? {
-        val stream = javaClass.classLoader.getResourceAsStream("docs/function_url.properties")
-        val properties = Properties()
-        properties.load(stream)
-        val url = properties.getProperty(originalElement?.text) ?: return emptyList()
+    private fun escape(text: String): String = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    override fun getUrlFor(element: PsiElement?, originalElement: PsiElement?): List<String>? {
+        val url = MatlabLibraryDocs.urls.getProperty(originalElement?.text) ?: return emptyList()
         return listOf("https://www.mathworks.com/help/matlab/$url")
     }
 
     override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
         val declaration = getDeclaration(element, originalElement) ?: originalElement?.text ?: ""
-        val result = DEFINITION_START + declaration + DEFINITION_END
-        val stream = javaClass.classLoader.getResourceAsStream("docs/function_descriptions.properties")
-        val properties = Properties()
-        properties.load(stream)
-        val description = properties.getProperty(originalElement?.text)
+        val result = DEFINITION_START + escape(declaration) + DEFINITION_END
+        val description = MatlabLibraryDocs.descriptions.getProperty(originalElement?.text)
         if (description != null) {
-            return result + CONTENT_START + description + CONTENT_END
+            return result + CONTENT_START + escape(description) + CONTENT_END
         }
         if (element is MatlabFunctionDeclaration || element is MatlabClassDeclaration) {
             var comment: PsiElement? = element.getChildOfType(MatlabTypes.COMMENT) ?: return result
@@ -38,8 +33,8 @@ class MatlabDocumentationProvider : DocumentationProvider {
             while (comment != null && comment.elementType == MatlabTypes.COMMENT) {
                 if (isFirst) isFirst = false
                 else commentText.append("<br/>")
-                commentText.append(comment.text.trimStart('%').trim())
-                if (comment.nextSibling.elementType == MatlabTypes.NEWLINE) {
+                commentText.append(escape(comment.text.trimStart('%').trim()))
+                if (comment.nextSibling?.elementType == MatlabTypes.NEWLINE) {
                     comment = PsiTreeUtil.skipWhitespacesForward(comment.nextSibling)
                 } else {
                     break
@@ -76,7 +71,7 @@ class MatlabDocumentationProvider : DocumentationProvider {
                 val result = StringBuilder("classdef ")
                 result.append(printElement(element.attributes, "", " "))
                 result.append(getName(element))
-                result.append(printElement(element.superClasses, " &lt ", ""))
+                result.append(printElement(element.superClasses, " ", ""))  // the text already starts with "<"
                 return result.toString()
             }
         }

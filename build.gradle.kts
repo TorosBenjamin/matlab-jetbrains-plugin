@@ -23,6 +23,7 @@ dependencies {
         // Ultimate-only startup code breaks the test sandbox.
         intellijIdeaCommunity("2026.2.3") { useInstaller = false }
         testFramework(TestFrameworkType.Platform)
+        pluginVerifier()
     }
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.opentest4j:opentest4j:1.3.0")
@@ -60,5 +61,18 @@ intellijPlatform {
         }
     }
     buildSearchableOptions = false
+    pluginVerification {
+        ides {
+            create("IC", "2025.2.4") { useInstaller = false }
+            create("IC", "2026.2.3") { useInstaller = false }
+        }
+    }
 }
 
+
+tasks.test {
+    // Optional: folder of MATLAB code for CorpusParsingTest (-PmatlabCorpus=/path).
+    systemProperty("matlab.corpus", findProperty("matlabCorpus")?.toString() ?: "")
+    systemProperty("matlab.corpus.report", layout.buildDirectory.file("corpus-report.txt").get().asFile.path)
+    testLogging { showStandardStreams = findProperty("matlabCorpus") != null }
+}

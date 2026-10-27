@@ -25,6 +25,7 @@
                   implementationClass="com.github.kornilova203.matlab.MatlabFileType"/>
         <lang.parserDefinition language="Matlab"
                                implementationClass="com.github.kornilova203.matlab.MatlabParserDefinition"/>
+        <colorSettingsPage implementation="com.github.kornilova203.matlab.MatlabColorSettingsPage"/>
         <lang.syntaxHighlighterFactory language="Matlab"
                                        implementationClass="com.github.kornilova203.matlab.MatlabSyntaxHighlighterFactory"/>
         <configurationType implementation="com.github.kornilova203.matlab.execution.MatlabConfigurationType"/>
@@ -76,7 +77,7 @@
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryReturnInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnusedVariable" displayName="Unused variable and parameters" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedVariableInspection"/>
-        <highlightingPassFactory implementation="com.github.kornilova203.matlab.MatlabBlockHighlighterFactory"/>
+        <highlightUsagesHandlerFactory implementation="com.github.kornilova203.matlab.highlighting.MatlabBlockKeywordHighlighterFactory"/>
         
     </extensions>
 </idea-plugin>

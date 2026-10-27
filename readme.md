@@ -1,7 +1,10 @@
-![Multi-OS Build](https://github.com/kornilova203/matlab-IntelliJ-plugin/workflows/Multi-OS%20Build/badge.svg)
-
 # Matlab support for IntelliJ
 Matlab syntax highlighting plugin for JetBrains IDEs.
+
+> **This is a fork** of [kornilova203/matlab-IntelliJ-plugin](https://github.com/kornilova203/matlab-IntelliJ-plugin),
+> updated for IntelliJ 2025.2+ (tested on 2026.2). Until it's published, install it from disk:
+> run `./gradlew buildPlugin`, then **Settings | Plugins | ⚙ | Install Plugin from Disk...** and pick
+> `build/distributions/IntelliJMatlabSupport-*.zip`. It replaces the original plugin if that is installed.
 
 ![Screenshot of Matlab plugin](screenshots/screen.png)
 
@@ -23,15 +26,25 @@ https://plugins.jetbrains.com/plugin/10941-matlab-support
  4. You can save generated run configuration so it will not be removed.
  To do it open **Run | Edit configuration...** choose the configuration and click **Save** icon.
 
-Note: currently `Program arguments` field in configuration is ignored.
+The script is run with `matlab -batch "run('file.m')"` (or `octave --eval` when the interpreter
+path contains `octave`). The process stays alive while figure windows are open.
  
 ## Development
 
 For easier development install [Grammar-Kit](https://plugins.jetbrains.com/plugin/6606-grammar-kit) plugin.
 
+Requirements: JDK 25 (the JetBrains Runtime bundled with IntelliJ works:
+`export JAVA_HOME=<IntelliJ install>/jbr`).
+
 Follow these steps to start working on the plugin:
 1. Clone project and import it to IntelliJ IDEA as Gradle project.
 2. Run/Debug `runIde` Gradle task.
+
+Useful Gradle tasks:
+- `test` runs the test suite.
+- `verifyPlugin` checks compatibility and API usage against the IDE versions listed in `build.gradle.kts`.
+- `test --tests '*CorpusParsingTest' -PmatlabCorpus=/path/to/code` parses every `.m` file in a folder
+  and writes the parse errors to `build/corpus-report.txt`.
 
 ### How to re-generate parser
 

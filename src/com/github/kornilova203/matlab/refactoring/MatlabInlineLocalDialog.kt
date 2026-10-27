@@ -18,8 +18,6 @@ class MatlabInlineLocalDialog(project: Project,
         close(DialogWrapper.OK_EXIT_CODE)
     }
 
-    override fun getBorderTitle(): String = "Inline"
-
     override fun getNameLabelText(): String = "Variable '${variable.text}'"
 
     override fun getInlineAllText(): String? {

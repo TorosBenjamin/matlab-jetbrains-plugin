@@ -8,7 +8,7 @@ import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ import static com.github.kornilova203.matlab.psi.MatlabTypes.*;
 public class MatlabParserUtil extends GeneratedParserUtilBase {
     static final String ALLOW_END_AS_IDENTIFIER = "ALLOW_END_AS_IDENTIFIER";
     static final String NEW_LINE_ALLOWED = "NEW_LINE_ALLOWED";
-    private static final Key<TObjectLongHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
+    private static final Key<Object2LongOpenHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
     static final HashSet<IElementType> KEYWORDS = new HashSet<>(Arrays.asList(FUNCTION, END, IF, ELSE, ELSEIF, WHILE,
             SWITCH, CASE, OTHERWISE, FOR, CLASSDEF, TRY, CATCH, GLOBAL, RETURN, CONTINUE, BREAK, SPMD, PARFOR));
 
@@ -74,8 +74,8 @@ public class MatlabParserUtil extends GeneratedParserUtilBase {
     }
 
     private static boolean withImpl(PsiBuilder builder, int level, String mode, boolean onOff, Parser parser) {
-        TObjectLongHashMap<String> map = getParsingModes(builder);
-        long prev = map.get(mode);
+        Object2LongOpenHashMap<String> map = getParsingModes(builder);
+        long prev = map.getLong(mode);
         boolean change = ((prev & 1) == 0) == onOff;
         if (change) map.put(mode, prev << 1 | (onOff ? 1 : 0));
         boolean result = parser.parse(builder, level);
@@ -84,13 +84,13 @@ public class MatlabParserUtil extends GeneratedParserUtilBase {
     }
 
     private static boolean isOn(PsiBuilder builder, int level, String mode) {
-        TObjectLongHashMap<String> map = getParsingModes(builder);
-        return (map.get(mode) & 1) != 0;
+        Object2LongOpenHashMap<String> map = getParsingModes(builder);
+        return (map.getLong(mode) & 1) != 0;
     }
 
-    private static TObjectLongHashMap<String> getParsingModes(PsiBuilder builder) {
-        TObjectLongHashMap<String> flags = builder.getUserData(MODES_KEY);
-        if (flags == null) builder.putUserData(MODES_KEY, flags = new TObjectLongHashMap<>());
+    private static Object2LongOpenHashMap<String> getParsingModes(PsiBuilder builder) {
+        Object2LongOpenHashMap<String> flags = builder.getUserData(MODES_KEY);
+        if (flags == null) builder.putUserData(MODES_KEY, flags = new Object2LongOpenHashMap<>());
         return flags;
     }
 
