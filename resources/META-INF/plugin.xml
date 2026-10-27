@@ -25,6 +25,7 @@
         <li>Auto-insert end, fold %% sections, breadcrumbs</li>
         <li>Completion depends on position: nothing for new names, attribute names/values, types, validators</li>
         <li>Return types: singletons (getInstance), arguments (Output) blocks and factory functions; members of the result resolve and complete</li>
+        <li>Unused local/nested functions and private methods; "N usages" above functions, classes and properties</li>
     </ol>
     ]]>
     </change-notes>
@@ -91,6 +92,9 @@
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryContinueInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnnecessaryReturn" displayName="Unnecessary 'return' statement" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnnecessaryReturnInspection"/>
+        <localInspection language="Matlab" shortName="MatlabUnusedFunction" displayName="Unused function or private method" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedFunctionInspection"/>
+        <codeInsight.daemonBoundCodeVisionProvider implementation="com.github.kornilova203.matlab.codeVision.MatlabUsagesCodeVisionProvider"/>
         <localInspection language="Matlab" shortName="MatlabUnusedVariable" displayName="Unused variable and parameters" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedVariableInspection"/>
         <highlightUsagesHandlerFactory implementation="com.github.kornilova203.matlab.highlighting.MatlabBlockKeywordHighlighterFactory"/>
