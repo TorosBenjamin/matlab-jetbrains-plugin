@@ -12,3 +12,11 @@ y = x';
 z = [x y];
 disp(x)
 x
+clear global
+javaaddpath .
+cd ..
+!make clean
+  !ls -la
+ls = H.LineStyle;
+cd = 5;
+Ep = [cd wjp.'; ones(m, 1) diag(zjp)];

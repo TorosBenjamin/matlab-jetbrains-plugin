@@ -375,6 +375,10 @@ public class MatlabVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitSuperclassCallExpr(@NotNull MatlabSuperclassCallExpr o) {
+    visitExpr(o);
+  }
+
   public void visitSwitchBlock(@NotNull MatlabSwitchBlock o) {
     visitPsiElement(o);
   }

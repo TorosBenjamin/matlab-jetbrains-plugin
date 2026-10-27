@@ -12,3 +12,10 @@ classdef Shape
         out = fromFile(name);
     end
 end
+
+classdef WithContinuation
+    methods (Static)
+        [lineStyle, out] = ...
+            parsePlotStyle(varargin)
+    end
+end

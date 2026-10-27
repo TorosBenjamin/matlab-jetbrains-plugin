@@ -104,7 +104,7 @@
 
 root ::= NEWLINE * (element NEWLINE *) * end?
 
-private meta p_opt_list ::= '(' [ !')' <<list <<item>>>> sep ] ')' { pin=1 }
+private meta p_opt_list ::= '(' sep [ !')' <<list <<item>>>> sep ] ')' { pin=1 }
 private meta list ::= sep <<list_item <<item>>>> (sep ',' sep <<list_item <<item>>>>)* sep { recoverWhile=not_rparenth }
 private not_rparenth ::= !( ')' )
 private meta list_item ::= {} <<item>> { pin=1 recoverWhile=not_rparenth_or_comma }
@@ -131,6 +131,7 @@ private el ::= if_block
   | function_declaration
   | class_declaration
   | command_statement
+  | SHELL_COMMAND
   | expr
   | COMMENT { pin(".*_3")=1 }
 
@@ -163,7 +164,7 @@ private not_end_or_oef ::= !( NEWLINE* ( end | <<eof>> ) )
 
 global_variable_declaration ::= ident
 
-if_block ::= if br* condition ','? NEWLINE*
+if_block ::= if br* condition br* ','? NEWLINE*
   if_block_body NEWLINE*
   elseif_block* NEWLINE*
   [else_block NEWLINE*]
@@ -174,15 +175,16 @@ condition ::= expr
 private if_block_body ::= <<block element>> { recoverWhile=not_end_or_elseif_or_else }
 private not_end_or_elseif_or_else ::= !( NEWLINE* (end | elseif | else) )
 
-elseif_block ::= elseif br* condition NEWLINE * if_block_body { pin=1 }
+elseif_block ::= elseif br* condition br* ','? NEWLINE * if_block_body { pin=1 }
 else_block ::= else NEWLINE* if_block_body
 
-switch_block ::= switch br* switch_expression NEWLINE*
+switch_block ::= switch br* switch_expression br* [ ',' | ';' ] NEWLINE*
   case_block* NEWLINE*
   [otherwise_block NEWLINE*]
   end { pin=1 }
-switch_expression ::= expr { recoverWhile=case_block_recovery }
-case_block ::= case NEWLINE* case_expression NEWLINE* <<block element>> { pin=1 recoverWhile=case_block_recovery }
+switch_expression ::= expr { recoverWhile=switch_expression_recovery }
+private switch_expression_recovery ::= !( br* (',' | ';') | NEWLINE* ( case | otherwise | end ) )
+case_block ::= case sep case_expression br* [ ',' | ';' ] NEWLINE* <<block element>> { pin=1 recoverWhile=case_block_recovery }
 case_expression ::= expr
 otherwise_block ::= otherwise NEWLINE* <<block element>> { pin=1 recoverWhile=case_block_recovery }
 private case_block_recovery ::= !( NEWLINE* ( case | otherwise | end ) )
@@ -194,12 +196,12 @@ try_block ::= try sep
   {pin=1}
 catch_block ::= catch [ br* ident ] sep <<block element>> {pin=1}
 
-for_loop ::= for br* for_loop_range [ ';' | ',' ] NEWLINE*
+for_loop ::= for br* for_loop_range br* [ ';' | ',' ] NEWLINE*
     block_that_recovers_until_end
     end { pin=1 }
 for_loop_range ::= expr
 
-while_loop ::= while br* while_loop_condition [ ';' | ',' ] NEWLINE*
+while_loop ::= while br* while_loop_condition br* [ ';' | ',' ] NEWLINE*
     block_that_recovers_until_end
     end { pin=1 }
 while_loop_condition ::= expr
@@ -270,7 +272,7 @@ methods_block ::= methods_token br* attributes? NEWLINE*
 private methods_token ::= <<parseIdentifierAsKeyword 'METHODS'>>
 methods_list ::= ((function_declaration | method_signature) NEWLINE*)* { recoverWhile=block_inside_class_recovery }
 // Declaration without a body, e.g. for methods defined in separate files: [a, b] = name(obj, x)
-method_signature ::= [ method_signature_returns ] ident br* parameters? ';'?
+method_signature ::= [ method_signature_returns br* ] ident br* parameters? ';'?
 private method_signature_returns ::= (multiple_ret_values | ret_value) br* '='
 
 events_block ::= events_token br* attributes? NEWLINE*
@@ -295,6 +297,7 @@ enum_item ::= ident arguments?
     extends("cell_array_access_expr")=expr
     extends("range_expr")=expr
     extends("function_expr")=expr
+    extends("superclass_call_expr")=expr
     extends("paren_expr")=expr
     extends("lambda_expr")=expr
     extends("binary_expr")=expr
@@ -356,6 +359,7 @@ private add_group ::= plus_expr
   | minus_expr
 
 private primary_group ::= literal_expr
+  | superclass_call_expr
   | qualified_with_keyword_expr
   | qualified_expr
   | direct_function_expr
@@ -446,6 +450,9 @@ plus_expr ::= expr ws '+' ws expr
 private br ::= '...' NEWLINE { pin=1 }
 
 function_ref_expr ::= '@' ref_expr { pin=1 }
+
+// Calls a superclass method or constructor: horzcat@pkg.Base(obj), obj@Base(args)
+superclass_call_expr ::= ref_expr '@' qualified_name arguments? { pin=2 }
 
 lambda_expr ::= '@' br* parameters br* lambda_body { pin=3 }
 lambda_body ::= expr

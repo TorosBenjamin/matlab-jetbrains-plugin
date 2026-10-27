@@ -53,4 +53,6 @@ open class MatlabParserTest : ParsingTestCase("", "m", MatlabParserDefinition())
     fun testMethodSignatures() = doTestNoErrors()
     fun testCommandSyntax() = doTestNoErrors()
     fun testFieldNamedLikeCommand() = doTestNoErrors()
+    fun testContinuations() = doTestNoErrors()
+    fun testSuperclassCall() = doTestNoErrors()
 }

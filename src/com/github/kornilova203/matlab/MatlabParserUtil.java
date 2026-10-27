@@ -117,10 +117,11 @@ public class MatlabParserUtil extends GeneratedParserUtilBase {
     }
 
     private static final Set<IElementType> COMMAND_START_TOKENS = new HashSet<>(Arrays.asList(
-            IDENTIFIER, INTEGER, FLOAT, FLOAT_EXPONENTIAL, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, CTRANS));
+            IDENTIFIER, INTEGER, FLOAT, FLOAT_EXPONENTIAL, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, CTRANS,
+            GLOBAL /* clear global */));
     /** Tokens that start a command argument only when glued to the next token: -O, *.m, ../lib, /tmp */
     private static final Set<IElementType> COMMAND_START_PREFIXES = new HashSet<>(Arrays.asList(
-            MINUS, MUL, DOT, DOT_RDIV, RDIV, LDIV));
+            MINUS, MUL, DOT_RDIV, RDIV, LDIV));
 
     /**
      * Consumes the rest of a command syntax statement (`hold on`, `addpath ../lib`).
@@ -131,6 +132,8 @@ public class MatlabParserUtil extends GeneratedParserUtilBase {
         if (builder.rawLookup(-1) != WHITE_SPACE) return false;
         IElementType type = builder.getTokenType();
         boolean isCommand = COMMAND_START_TOKENS.contains(type) ||
+                type == DOT ||  // cd .  /  addpath ../lib
+
                 (COMMAND_START_PREFIXES.contains(type) && isGluedToNext(builder));
         if (!isCommand) return false;
         boolean inQuote = false;  // 'quoted text' after a space is lexed as transpose tokens

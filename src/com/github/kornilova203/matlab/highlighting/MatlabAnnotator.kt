@@ -23,6 +23,8 @@ class MatlabAnnotator : Annotator {
         val LAMBDA_PARENTH = createTextAttributesKey("MATLAB.LAMBDA_PARENTH", DefaultLanguageHighlighterColors.METADATA)
         val KEYWORD = createTextAttributesKey("MATLAB.KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
         val ID = createTextAttributesKey("MATLAB.ID", DefaultLanguageHighlighterColors.IDENTIFIER)
+        /** Words after a command name, e.g. `on` in `hold on`; MATLAB passes them as char arrays. */
+        val COMMAND_ARGUMENT = createTextAttributesKey("MATLAB.COMMAND_ARGUMENT", DefaultLanguageHighlighterColors.STRING)
     }
 
     // Called once per PSI element (leaves included), so only look at the element itself.
@@ -34,7 +36,10 @@ class MatlabAnnotator : Annotator {
                     el.parent is MatlabParameters && el.parent.parent is MatlabLambdaExpr  -> LAMBDA_PARENTH
             type == IDENTIFIER && el.parent is MatlabFunctionDeclaration                   -> FUNCTION_DECLARATION
             type == IDENTIFIER && el.parent is MatlabClassDeclaration                      -> CLASS_DECLARATION
-            type == METHODS || type == EVENTS || type == PROPERTIES || type == ENUMERATION -> KEYWORD
+            type == METHODS || type == EVENTS || type == PROPERTIES || type == ENUMERATION ||
+                    type == PERSISTENT || type == ARGUMENTS_KEYWORD                        -> KEYWORD
+            type == COMMAND_ARGUMENTS                                                   -> COMMAND_ARGUMENT
+            type == IDENTIFIER && el.parent?.node?.elementType == COMMAND_ARGUMENTS      -> null
             type == IDENTIFIER                                                             -> ID
             else -> null
         } ?: return

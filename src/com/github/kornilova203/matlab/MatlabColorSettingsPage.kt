@@ -20,6 +20,7 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Number", MatlabSyntaxHighlighter.NUMBER),
         AttributesDescriptor("Semicolon", MatlabSyntaxHighlighter.SEMICOLON),
         AttributesDescriptor("Identifier", MatlabAnnotator.ID),
+        AttributesDescriptor("Command argument (hold on)", MatlabAnnotator.COMMAND_ARGUMENT),
         AttributesDescriptor("Function declaration", MatlabAnnotator.FUNCTION_DECLARATION),
         AttributesDescriptor("Class declaration", MatlabAnnotator.CLASS_DECLARATION),
         AttributesDescriptor("Anonymous function @(...)", MatlabAnnotator.LAMBDA_PARENTH),
@@ -32,6 +33,7 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         "blk" to MatlabAnnotator.KEYWORD,
         "at" to MatlabAnnotator.LAMBDA_PARENTH,
         "id" to MatlabAnnotator.ID,
+        "cmd" to MatlabAnnotator.COMMAND_ARGUMENT,
     )
 
     override fun getDisplayName(): String = "MATLAB"
@@ -62,5 +64,6 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         <id>s</id> = "a string";
         <id>m</id> = [1 2; 3 4]';
         disp(<id>msg</id>)  % trailing comment
+        hold <cmd>on</cmd>
     """.trimIndent()
 }

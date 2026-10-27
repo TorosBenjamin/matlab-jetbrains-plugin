@@ -100,6 +100,7 @@ public interface MatlabTypes {
   IElementType RETURN_VALUES = new MatlabElementType("RETURN_VALUES");
   IElementType RET_VALUE = new MatlabElementType("RET_VALUE");
   IElementType SPMD_BLOCK = new MatlabElementType("SPMD_BLOCK");
+  IElementType SUPERCLASS_CALL_EXPR = new MatlabElementType("SUPERCLASS_CALL_EXPR");
   IElementType SUPER_CLASSES = new MatlabElementType("SUPER_CLASSES");
   IElementType SWITCH_BLOCK = new MatlabElementType("SWITCH_BLOCK");
   IElementType SWITCH_EXPRESSION = new MatlabElementType("SWITCH_EXPRESSION");
@@ -181,6 +182,7 @@ public interface MatlabTypes {
   IElementType RETURN = new MatlabTokenType("return");
   IElementType RPARENTH = new MatlabTokenType(")");
   IElementType SEMICOLON = new MatlabTokenType(";");
+  IElementType SHELL_COMMAND = new MatlabTokenType("SHELL_COMMAND");
   IElementType SINGLE_QUOTE_STRING = new MatlabTokenType("SINGLE_QUOTE_STRING");
   IElementType SPMD = new MatlabTokenType("spmd");
   IElementType SWITCH = new MatlabTokenType("switch");
@@ -456,6 +458,9 @@ public interface MatlabTypes {
       }
       else if (type == SPMD_BLOCK) {
         return new MatlabSpmdBlockImpl(node);
+      }
+      else if (type == SUPERCLASS_CALL_EXPR) {
+        return new MatlabSuperclassCallExprImpl(node);
       }
       else if (type == SUPER_CLASSES) {
         return new MatlabSuperClassesImpl(node);

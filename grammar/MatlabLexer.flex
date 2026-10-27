@@ -59,6 +59,19 @@ import static com.github.kornilova203.matlab.psi.MatlabTypes.*;
         yypushState(WS_MATTERS);
     }
 
+    /** Inside [ ] or { }, where words like cd and ls are plain identifiers. */
+    private boolean inBrackets() {
+        if (yystate() == WS_MATTERS) return true;
+        return yystate() == LOOK_FOR_CTRANS && !stack.isEmpty() && stack.peek() == WS_MATTERS;
+    }
+
+    private IElementType fileOperation(IElementType type) {
+        if (inBrackets()) { lookForCtrans(); return IDENTIFIER; }
+        stopLookForCtrans();
+        yypushState(FILE_NAME_STATE);
+        return type;
+    }
+
     private void stopWsMatters() {
         if (yystate() == LOOK_FOR_CTRANS) yypopState();
         if (yystate() == WS_MATTERS) yypopState();
@@ -145,10 +158,13 @@ SINGLE_QUOTE_EXCAPE_SEQUENCE=\\[\\bfnrt]|''
   return                { stopLookForCtrans(); return RETURN; }
   continue              { stopLookForCtrans(); return CONTINUE; }
   break                 { stopLookForCtrans(); return BREAK; }
-  load/" "+[^ (]        { stopLookForCtrans(); yypushState(FILE_NAME_STATE); return LOAD; }
-  dir/" "+[^ (]         { stopLookForCtrans(); yypushState(FILE_NAME_STATE); return DIR; }
-  ls/" "+[^ (]          { stopLookForCtrans(); yypushState(FILE_NAME_STATE); return LS; }
-  cd/" "+[^ (]          { stopLookForCtrans(); yypushState(FILE_NAME_STATE); return CD; }
+  /* not followed by ( or =, so it isn't a call or an assignment: ls = 1 */
+  load/" "+[^ (=]       { return fileOperation(LOAD); }
+  dir/" "+[^ (=]        { return fileOperation(DIR); }
+  ls/" "+[^ (=]         { return fileOperation(LS); }
+  cd/" "+[^ (=]         { return fileOperation(CD); }
+  /* !command runs a shell command */
+  ^{WHITE_SPACE}? "!" [^\r\n]*  { stopLookForCtrans(); return SHELL_COMMAND; }
 
   "("                   { startWsDoesNotMatter(); return LPARENTH; }
   ")"                   { stopWsDoesNotMatter(); lookForCtrans(); return RPARENTH; }

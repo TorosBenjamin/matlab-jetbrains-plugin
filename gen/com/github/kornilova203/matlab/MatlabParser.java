@@ -45,9 +45,9 @@ public class MatlabParser implements PsiParser, LightPsiParser {
       MATRIX_OR_EXPR, META_CLASS_EXPR, MINUS_EXPR, MORE_EXPR,
       MORE_OR_EQUAL_EXPR, MUL_EXPR, NOT_EQUAL_EXPR, OR_EXPR,
       PAREN_EXPR, PLUS_EXPR, POW_EXPR, QUALIFIED_EXPR,
-      RANGE_EXPR, RDIV_EXPR, REF_EXPR, TRANSPOSE_EXPR,
-      UNARY_DEC_EXPR, UNARY_INC_EXPR, UNARY_MIN_EXPR, UNARY_NEGATION_EXPR,
-      UNARY_PLUS_EXPR, UNARY_PREFIX_DEC_EXPR, UNARY_PREFIX_INC_EXPR),
+      RANGE_EXPR, RDIV_EXPR, REF_EXPR, SUPERCLASS_CALL_EXPR,
+      TRANSPOSE_EXPR, UNARY_DEC_EXPR, UNARY_INC_EXPR, UNARY_MIN_EXPR,
+      UNARY_NEGATION_EXPR, UNARY_PLUS_EXPR, UNARY_PREFIX_DEC_EXPR, UNARY_PREFIX_INC_EXPR),
   };
 
   /* ********************************************************** */
@@ -442,39 +442,57 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // case NEWLINE* case_expression NEWLINE* <<block element>>
+  // case sep case_expression br* [ ',' | ';' ] NEWLINE* <<block element>>
   public static boolean case_block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_block")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, CASE_BLOCK, "<case block>");
     r = consumeToken(b, CASE);
     p = r; // pin = 1
-    r = r && report_error_(b, case_block_1(b, l + 1));
+    r = r && report_error_(b, sep(b, l + 1));
     r = p && report_error_(b, case_expression(b, l + 1)) && r;
     r = p && report_error_(b, case_block_3(b, l + 1)) && r;
+    r = p && report_error_(b, case_block_4(b, l + 1)) && r;
+    r = p && report_error_(b, case_block_5(b, l + 1)) && r;
     r = p && block(b, l + 1, MatlabParser::element) && r;
     exit_section_(b, l, m, r, p, MatlabParser::case_block_recovery);
     return r || p;
   }
 
-  // NEWLINE*
-  private static boolean case_block_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_block_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "case_block_1", c)) break;
-    }
-    return true;
-  }
-
-  // NEWLINE*
+  // br*
   private static boolean case_block_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_block_3")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!consumeToken(b, NEWLINE)) break;
+      if (!br(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "case_block_3", c)) break;
+    }
+    return true;
+  }
+
+  // [ ',' | ';' ]
+  private static boolean case_block_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_block_4")) return false;
+    case_block_4_0(b, l + 1);
+    return true;
+  }
+
+  // ',' | ';'
+  private static boolean case_block_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_block_4_0")) return false;
+    boolean r;
+    r = consumeToken(b, COMMA);
+    if (!r) r = consumeToken(b, SEMICOLON);
+    return r;
+  }
+
+  // NEWLINE*
+  private static boolean case_block_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_block_5")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "case_block_5", c)) break;
     }
     return true;
   }
@@ -1139,6 +1157,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   //   | function_declaration
   //   | class_declaration
   //   | command_statement
+  //   | SHELL_COMMAND
   //   | expr
   //   | COMMENT
   static boolean el(PsiBuilder b, int l) {
@@ -1159,6 +1178,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     if (!r) r = function_declaration(b, l + 1);
     if (!r) r = class_declaration(b, l + 1);
     if (!r) r = command_statement(b, l + 1);
+    if (!r) r = consumeToken(b, SHELL_COMMAND);
     if (!r) r = expr(b, l + 1, -1);
     if (!r) r = consumeToken(b, COMMENT);
     exit_section_(b, m, null, r);
@@ -1289,7 +1309,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // elseif br* condition NEWLINE * if_block_body
+  // elseif br* condition br* ','? NEWLINE * if_block_body
   public static boolean elseif_block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elseif_block")) return false;
     if (!nextTokenIs(b, ELSEIF)) return false;
@@ -1300,6 +1320,8 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = r && report_error_(b, elseif_block_1(b, l + 1));
     r = p && report_error_(b, condition(b, l + 1)) && r;
     r = p && report_error_(b, elseif_block_3(b, l + 1)) && r;
+    r = p && report_error_(b, elseif_block_4(b, l + 1)) && r;
+    r = p && report_error_(b, elseif_block_5(b, l + 1)) && r;
     r = p && if_block_body(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -1316,13 +1338,31 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // NEWLINE *
+  // br*
   private static boolean elseif_block_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elseif_block_3")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!consumeToken(b, NEWLINE)) break;
+      if (!br(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "elseif_block_3", c)) break;
+    }
+    return true;
+  }
+
+  // ','?
+  private static boolean elseif_block_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elseif_block_4")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  // NEWLINE *
+  private static boolean elseif_block_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elseif_block_5")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "elseif_block_5", c)) break;
     }
     return true;
   }
@@ -1650,7 +1690,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // for br* for_loop_range [ ';' | ',' ] NEWLINE*
+  // for br* for_loop_range br* [ ';' | ',' ] NEWLINE*
   //     block_that_recovers_until_end
   //     end
   public static boolean for_loop(PsiBuilder b, int l) {
@@ -1664,6 +1704,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, for_loop_range(b, l + 1)) && r;
     r = p && report_error_(b, for_loop_3(b, l + 1)) && r;
     r = p && report_error_(b, for_loop_4(b, l + 1)) && r;
+    r = p && report_error_(b, for_loop_5(b, l + 1)) && r;
     r = p && report_error_(b, block_that_recovers_until_end(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
     exit_section_(b, l, m, r, p, null);
@@ -1681,16 +1722,27 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // [ ';' | ',' ]
+  // br*
   private static boolean for_loop_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_loop_3")) return false;
-    for_loop_3_0(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!br(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "for_loop_3", c)) break;
+    }
+    return true;
+  }
+
+  // [ ';' | ',' ]
+  private static boolean for_loop_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_loop_4")) return false;
+    for_loop_4_0(b, l + 1);
     return true;
   }
 
   // ';' | ','
-  private static boolean for_loop_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_loop_3_0")) return false;
+  private static boolean for_loop_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_loop_4_0")) return false;
     boolean r;
     r = consumeToken(b, SEMICOLON);
     if (!r) r = consumeToken(b, COMMA);
@@ -1698,12 +1750,12 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   // NEWLINE*
-  private static boolean for_loop_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_loop_4")) return false;
+  private static boolean for_loop_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_loop_5")) return false;
     while (true) {
       int c = current_position_(b);
       if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "for_loop_4", c)) break;
+      if (!empty_element_parsed_guard_(b, "for_loop_5", c)) break;
     }
     return true;
   }
@@ -1869,7 +1921,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // if br* condition ','? NEWLINE*
+  // if br* condition br* ','? NEWLINE*
   //   if_block_body NEWLINE*
   //   elseif_block* NEWLINE*
   //   [else_block NEWLINE*]
@@ -1885,11 +1937,12 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, condition(b, l + 1)) && r;
     r = p && report_error_(b, if_block_3(b, l + 1)) && r;
     r = p && report_error_(b, if_block_4(b, l + 1)) && r;
+    r = p && report_error_(b, if_block_5(b, l + 1)) && r;
     r = p && report_error_(b, if_block_body(b, l + 1)) && r;
-    r = p && report_error_(b, if_block_6(b, l + 1)) && r;
     r = p && report_error_(b, if_block_7(b, l + 1)) && r;
     r = p && report_error_(b, if_block_8(b, l + 1)) && r;
     r = p && report_error_(b, if_block_9(b, l + 1)) && r;
+    r = p && report_error_(b, if_block_10(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -1906,82 +1959,93 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ','?
+  // br*
   private static boolean if_block_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_block_3")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!br(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "if_block_3", c)) break;
+    }
+    return true;
+  }
+
+  // ','?
+  private static boolean if_block_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_block_4")) return false;
     consumeToken(b, COMMA);
     return true;
   }
 
   // NEWLINE*
-  private static boolean if_block_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_block_4")) return false;
+  private static boolean if_block_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_block_5")) return false;
     while (true) {
       int c = current_position_(b);
       if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "if_block_4", c)) break;
+      if (!empty_element_parsed_guard_(b, "if_block_5", c)) break;
     }
     return true;
   }
 
   // NEWLINE*
-  private static boolean if_block_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_block_6")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "if_block_6", c)) break;
-    }
-    return true;
-  }
-
-  // elseif_block*
   private static boolean if_block_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_block_7")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!elseif_block(b, l + 1)) break;
+      if (!consumeToken(b, NEWLINE)) break;
       if (!empty_element_parsed_guard_(b, "if_block_7", c)) break;
     }
     return true;
   }
 
-  // NEWLINE*
+  // elseif_block*
   private static boolean if_block_8(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_block_8")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!consumeToken(b, NEWLINE)) break;
+      if (!elseif_block(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "if_block_8", c)) break;
     }
     return true;
   }
 
-  // [else_block NEWLINE*]
+  // NEWLINE*
   private static boolean if_block_9(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_block_9")) return false;
-    if_block_9_0(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "if_block_9", c)) break;
+    }
+    return true;
+  }
+
+  // [else_block NEWLINE*]
+  private static boolean if_block_10(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_block_10")) return false;
+    if_block_10_0(b, l + 1);
     return true;
   }
 
   // else_block NEWLINE*
-  private static boolean if_block_9_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_block_9_0")) return false;
+  private static boolean if_block_10_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_block_10_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = else_block(b, l + 1);
-    r = r && if_block_9_0_1(b, l + 1);
+    r = r && if_block_10_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // NEWLINE*
-  private static boolean if_block_9_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "if_block_9_0_1")) return false;
+  private static boolean if_block_10_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_block_10_0_1")) return false;
     while (true) {
       int c = current_position_(b);
       if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "if_block_9_0_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "if_block_10_0_1", c)) break;
     }
     return true;
   }
@@ -2220,7 +2284,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [ method_signature_returns ] ident br* parameters? ';'?
+  // [ method_signature_returns br* ] ident br* parameters? ';'?
   public static boolean method_signature(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "method_signature")) return false;
     boolean r;
@@ -2234,10 +2298,32 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ method_signature_returns ]
+  // [ method_signature_returns br* ]
   private static boolean method_signature_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "method_signature_0")) return false;
-    method_signature_returns(b, l + 1);
+    method_signature_0_0(b, l + 1);
+    return true;
+  }
+
+  // method_signature_returns br*
+  private static boolean method_signature_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "method_signature_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = method_signature_returns(b, l + 1);
+    r = r && method_signature_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // br*
+  private static boolean method_signature_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "method_signature_0_0_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!br(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "method_signature_0_0_1", c)) break;
+    }
     return true;
   }
 
@@ -2967,7 +3053,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' [ !')' <<list <<item>>>> sep ] ')'
+  // '(' sep [ !')' <<list <<item>>>> sep ] ')'
   static boolean p_opt_list(PsiBuilder b, int l, Parser _item) {
     if (!recursion_guard_(b, l, "p_opt_list")) return false;
     if (!nextTokenIs(b, LPARENTH)) return false;
@@ -2975,25 +3061,26 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, LPARENTH);
     p = r; // pin = 1
-    r = r && report_error_(b, p_opt_list_1(b, l + 1, _item));
+    r = r && report_error_(b, sep(b, l + 1));
+    r = p && report_error_(b, p_opt_list_2(b, l + 1, _item)) && r;
     r = p && consumeToken(b, RPARENTH) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // [ !')' <<list <<item>>>> sep ]
-  private static boolean p_opt_list_1(PsiBuilder b, int l, Parser _item) {
-    if (!recursion_guard_(b, l, "p_opt_list_1")) return false;
-    p_opt_list_1_0(b, l + 1, _item);
+  private static boolean p_opt_list_2(PsiBuilder b, int l, Parser _item) {
+    if (!recursion_guard_(b, l, "p_opt_list_2")) return false;
+    p_opt_list_2_0(b, l + 1, _item);
     return true;
   }
 
   // !')' <<list <<item>>>> sep
-  private static boolean p_opt_list_1_0(PsiBuilder b, int l, Parser _item) {
-    if (!recursion_guard_(b, l, "p_opt_list_1_0")) return false;
+  private static boolean p_opt_list_2_0(PsiBuilder b, int l, Parser _item) {
+    if (!recursion_guard_(b, l, "p_opt_list_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = p_opt_list_1_0_0(b, l + 1);
+    r = p_opt_list_2_0_0(b, l + 1);
     r = r && list(b, l + 1, _item);
     r = r && sep(b, l + 1);
     exit_section_(b, m, null, r);
@@ -3001,8 +3088,8 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   // !')'
-  private static boolean p_opt_list_1_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "p_opt_list_1_0_0")) return false;
+  private static boolean p_opt_list_2_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "p_opt_list_2_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
     r = !consumeToken(b, RPARENTH);
@@ -3818,7 +3905,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // switch br* switch_expression NEWLINE*
+  // switch br* switch_expression br* [ ',' | ';' ] NEWLINE*
   //   case_block* NEWLINE*
   //   [otherwise_block NEWLINE*]
   //   end
@@ -3835,6 +3922,8 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, switch_block_4(b, l + 1)) && r;
     r = p && report_error_(b, switch_block_5(b, l + 1)) && r;
     r = p && report_error_(b, switch_block_6(b, l + 1)) && r;
+    r = p && report_error_(b, switch_block_7(b, l + 1)) && r;
+    r = p && report_error_(b, switch_block_8(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -3851,26 +3940,31 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // NEWLINE*
+  // br*
   private static boolean switch_block_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_block_3")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!consumeToken(b, NEWLINE)) break;
+      if (!br(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "switch_block_3", c)) break;
     }
     return true;
   }
 
-  // case_block*
+  // [ ',' | ';' ]
   private static boolean switch_block_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_block_4")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!case_block(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "switch_block_4", c)) break;
-    }
+    switch_block_4_0(b, l + 1);
     return true;
+  }
+
+  // ',' | ';'
+  private static boolean switch_block_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_block_4_0")) return false;
+    boolean r;
+    r = consumeToken(b, COMMA);
+    if (!r) r = consumeToken(b, SEMICOLON);
+    return r;
   }
 
   // NEWLINE*
@@ -3884,31 +3978,53 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // [otherwise_block NEWLINE*]
+  // case_block*
   private static boolean switch_block_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_block_6")) return false;
-    switch_block_6_0(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!case_block(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switch_block_6", c)) break;
+    }
+    return true;
+  }
+
+  // NEWLINE*
+  private static boolean switch_block_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_block_7")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "switch_block_7", c)) break;
+    }
+    return true;
+  }
+
+  // [otherwise_block NEWLINE*]
+  private static boolean switch_block_8(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_block_8")) return false;
+    switch_block_8_0(b, l + 1);
     return true;
   }
 
   // otherwise_block NEWLINE*
-  private static boolean switch_block_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_block_6_0")) return false;
+  private static boolean switch_block_8_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_block_8_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = otherwise_block(b, l + 1);
-    r = r && switch_block_6_0_1(b, l + 1);
+    r = r && switch_block_8_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // NEWLINE*
-  private static boolean switch_block_6_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switch_block_6_0_1")) return false;
+  private static boolean switch_block_8_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_block_8_0_1")) return false;
     while (true) {
       int c = current_position_(b);
       if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "switch_block_6_0_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "switch_block_8_0_1", c)) break;
     }
     return true;
   }
@@ -3920,7 +4036,92 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, SWITCH_EXPRESSION, "<switch expression>");
     r = expr(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, MatlabParser::case_block_recovery);
+    exit_section_(b, l, m, r, false, MatlabParser::switch_expression_recovery);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !( br* (',' | ';') | NEWLINE* ( case | otherwise | end ) )
+  static boolean switch_expression_recovery(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !switch_expression_recovery_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // br* (',' | ';') | NEWLINE* ( case | otherwise | end )
+  private static boolean switch_expression_recovery_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = switch_expression_recovery_0_0(b, l + 1);
+    if (!r) r = switch_expression_recovery_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // br* (',' | ';')
+  private static boolean switch_expression_recovery_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = switch_expression_recovery_0_0_0(b, l + 1);
+    r = r && switch_expression_recovery_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // br*
+  private static boolean switch_expression_recovery_0_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0_0_0")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!br(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switch_expression_recovery_0_0_0", c)) break;
+    }
+    return true;
+  }
+
+  // ',' | ';'
+  private static boolean switch_expression_recovery_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0_0_1")) return false;
+    boolean r;
+    r = consumeToken(b, COMMA);
+    if (!r) r = consumeToken(b, SEMICOLON);
+    return r;
+  }
+
+  // NEWLINE* ( case | otherwise | end )
+  private static boolean switch_expression_recovery_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = switch_expression_recovery_0_1_0(b, l + 1);
+    r = r && switch_expression_recovery_0_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // NEWLINE*
+  private static boolean switch_expression_recovery_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0_1_0")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "switch_expression_recovery_0_1_0", c)) break;
+    }
+    return true;
+  }
+
+  // case | otherwise | end
+  private static boolean switch_expression_recovery_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switch_expression_recovery_0_1_1")) return false;
+    boolean r;
+    r = consumeToken(b, CASE);
+    if (!r) r = consumeToken(b, OTHERWISE);
+    if (!r) r = consumeToken(b, END);
     return r;
   }
 
@@ -3974,7 +4175,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // while br* while_loop_condition [ ';' | ',' ] NEWLINE*
+  // while br* while_loop_condition br* [ ';' | ',' ] NEWLINE*
   //     block_that_recovers_until_end
   //     end
   public static boolean while_loop(PsiBuilder b, int l) {
@@ -3988,6 +4189,7 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, while_loop_condition(b, l + 1)) && r;
     r = p && report_error_(b, while_loop_3(b, l + 1)) && r;
     r = p && report_error_(b, while_loop_4(b, l + 1)) && r;
+    r = p && report_error_(b, while_loop_5(b, l + 1)) && r;
     r = p && report_error_(b, block_that_recovers_until_end(b, l + 1)) && r;
     r = p && consumeToken(b, END) && r;
     exit_section_(b, l, m, r, p, null);
@@ -4005,16 +4207,27 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // [ ';' | ',' ]
+  // br*
   private static boolean while_loop_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_loop_3")) return false;
-    while_loop_3_0(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!br(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "while_loop_3", c)) break;
+    }
+    return true;
+  }
+
+  // [ ';' | ',' ]
+  private static boolean while_loop_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_loop_4")) return false;
+    while_loop_4_0(b, l + 1);
     return true;
   }
 
   // ';' | ','
-  private static boolean while_loop_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "while_loop_3_0")) return false;
+  private static boolean while_loop_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_loop_4_0")) return false;
     boolean r;
     r = consumeToken(b, SEMICOLON);
     if (!r) r = consumeToken(b, COMMA);
@@ -4022,12 +4235,12 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   }
 
   // NEWLINE*
-  private static boolean while_loop_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "while_loop_4")) return false;
+  private static boolean while_loop_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "while_loop_5")) return false;
     while (true) {
       int c = current_position_(b);
       if (!consumeToken(b, NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "while_loop_4", c)) break;
+      if (!empty_element_parsed_guard_(b, "while_loop_5", c)) break;
     }
     return true;
   }
@@ -4060,9 +4273,9 @@ public class MatlabParser implements PsiParser, LightPsiParser {
   // 9: POSTFIX(unary_inc_expr) POSTFIX(unary_dec_expr) PREFIX(unary_prefix_dec_expr) PREFIX(unary_prefix_inc_expr)
   //    PREFIX(unary_plus_expr) PREFIX(unary_min_expr) POSTFIX(ctranspose_expr) POSTFIX(transpose_expr)
   //    PREFIX(unary_negation_expr) PREFIX(meta_class_expr)
-  // 10: ATOM(literal_expr) POSTFIX(qualified_with_keyword_expr) BINARY(qualified_expr) ATOM(direct_function_expr)
-  //    POSTFIX(function_expr) POSTFIX(cell_array_access_expr) ATOM(ref_expr) ATOM(paren_expr)
-  //    ATOM(lambda_expr) ATOM(function_ref_expr) ATOM(control_expr)
+  // 10: ATOM(literal_expr) POSTFIX(superclass_call_expr) POSTFIX(qualified_with_keyword_expr) BINARY(qualified_expr)
+  //    ATOM(direct_function_expr) POSTFIX(function_expr) POSTFIX(cell_array_access_expr) ATOM(ref_expr)
+  //    ATOM(paren_expr) ATOM(lambda_expr) ATOM(function_ref_expr) ATOM(control_expr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expression>");
@@ -4196,6 +4409,10 @@ public class MatlabParser implements PsiParser, LightPsiParser {
       else if (g < 9 && transpose_expr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, TRANSPOSE_EXPR, r, true, null);
+      }
+      else if (g < 10 && leftMarkerIs(b, REF_EXPR) && superclass_call_expr_0(b, l + 1)) {
+        r = true;
+        exit_section_(b, l, m, SUPERCLASS_CALL_EXPR, r, true, null);
       }
       else if (g < 10 && qualified_with_keyword_expr_0(b, l + 1)) {
         r = true;
@@ -4701,6 +4918,25 @@ public class MatlabParser implements PsiParser, LightPsiParser {
     if (!r) r = cell_array_literal(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // '@' qualified_name arguments?
+  private static boolean superclass_call_expr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "superclass_call_expr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, AT);
+    r = r && qualified_name(b, l + 1);
+    r = r && superclass_call_expr_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // arguments?
+  private static boolean superclass_call_expr_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "superclass_call_expr_0_2")) return false;
+    arguments(b, l + 1);
+    return true;
   }
 
   // '.' <<parseKeywordAsRefExpression>>

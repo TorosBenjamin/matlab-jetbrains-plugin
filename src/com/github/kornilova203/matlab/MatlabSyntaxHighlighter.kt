@@ -48,7 +48,7 @@ class MatlabSyntaxHighlighter : SyntaxHighlighterBase() {
         return when (tokenType) {
             MatlabTypes.COMMENT -> COMMENT_KEYS
 
-            SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING -> STRING_KEYS
+            SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, SHELL_COMMAND -> STRING_KEYS
 
             StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN -> VALID_STRING_ESCAPE_KEYS
             StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN -> INVALID_STRING_ESCAPE_KEYS
