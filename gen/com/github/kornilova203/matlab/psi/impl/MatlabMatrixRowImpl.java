@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMatrixRowImpl extends MatlabASTWrapperPsiElement implements MatlabMatrixRow {
 
-  public MatlabMatrixRowImpl(@NotNull ASTNode node) {
+  public MatlabMatrixRowImpl(ASTNode node) {
     super(node);
   }
 

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabPropertiesBlockImpl extends MatlabASTWrapperPsiElement implements MatlabPropertiesBlock {
 
-  public MatlabPropertiesBlockImpl(@NotNull ASTNode node) {
+  public MatlabPropertiesBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabPropertiesBlockImpl extends MatlabASTWrapperPsiElement implem
   @Override
   @Nullable
   public MatlabAttributes getAttributes() {
-    return findChildByClass(MatlabAttributes.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabAttributes.class);
   }
 
   @Override
   @Nullable
   public MatlabPropertiesList getPropertiesList() {
-    return findChildByClass(MatlabPropertiesList.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabPropertiesList.class);
   }
 
 }

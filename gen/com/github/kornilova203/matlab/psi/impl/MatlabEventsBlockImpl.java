@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabEventsBlockImpl extends MatlabASTWrapperPsiElement implements MatlabEventsBlock {
 
-  public MatlabEventsBlockImpl(@NotNull ASTNode node) {
+  public MatlabEventsBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabEventsBlockImpl extends MatlabASTWrapperPsiElement implements
   @Override
   @Nullable
   public MatlabAttributes getAttributes() {
-    return findChildByClass(MatlabAttributes.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabAttributes.class);
   }
 
   @Override
   @Nullable
   public MatlabEventsList getEventsList() {
-    return findChildByClass(MatlabEventsList.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabEventsList.class);
   }
 
 }

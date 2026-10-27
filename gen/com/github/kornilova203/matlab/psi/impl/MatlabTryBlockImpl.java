@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabTryBlockImpl extends MatlabASTWrapperPsiElement implements MatlabTryBlock {
 
-  public MatlabTryBlockImpl(@NotNull ASTNode node) {
+  public MatlabTryBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabTryBlockImpl extends MatlabASTWrapperPsiElement implements Ma
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabCatchBlock getCatchBlock() {
-    return findChildByClass(MatlabCatchBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabCatchBlock.class);
   }
 
 }

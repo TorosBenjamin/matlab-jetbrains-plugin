@@ -13,11 +13,10 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabQualifiedExprImpl extends MatlabQualifiedExprMixin implements MatlabQualifiedExpr {
 
-  public MatlabQualifiedExprImpl(@NotNull ASTNode node) {
+  public MatlabQualifiedExprImpl(ASTNode node) {
     super(node);
   }
 
-  @Override
   public void accept(@NotNull MatlabVisitor visitor) {
     visitor.visitQualifiedExpr(this);
   }

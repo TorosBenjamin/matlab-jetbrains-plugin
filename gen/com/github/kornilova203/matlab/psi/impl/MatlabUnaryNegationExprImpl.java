@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabUnaryNegationExprImpl extends MatlabBinaryExprImpl implements MatlabUnaryNegationExpr {
 
-  public MatlabUnaryNegationExprImpl(@NotNull ASTNode node) {
+  public MatlabUnaryNegationExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabUnaryNegationExprImpl extends MatlabBinaryExprImpl implements
   @Override
   @Nullable
   public MatlabExpr getExpr() {
-    return findChildByClass(MatlabExpr.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabExpr.class);
   }
 
 }

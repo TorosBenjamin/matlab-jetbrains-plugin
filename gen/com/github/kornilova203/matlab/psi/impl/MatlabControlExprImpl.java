@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabControlExprImpl extends MatlabExprImpl implements MatlabControlExpr {
 
-  public MatlabControlExprImpl(@NotNull ASTNode node) {
+  public MatlabControlExprImpl(ASTNode node) {
     super(node);
   }
 

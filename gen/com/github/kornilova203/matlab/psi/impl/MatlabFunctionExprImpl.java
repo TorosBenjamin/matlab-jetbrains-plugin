@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabFunctionExprImpl extends MatlabFunctionExprMixin implements MatlabFunctionExpr {
 
-  public MatlabFunctionExprImpl(@NotNull ASTNode node) {
+  public MatlabFunctionExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabFunctionExprImpl extends MatlabFunctionExprMixin implements M
   @Override
   @NotNull
   public MatlabArguments getArguments() {
-    return findNotNullChildByClass(MatlabArguments.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabArguments.class));
   }
 
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabPropertyValidationFunctionsImpl extends MatlabASTWrapperPsiElement implements MatlabPropertyValidationFunctions {
 
-  public MatlabPropertyValidationFunctionsImpl(@NotNull ASTNode node) {
+  public MatlabPropertyValidationFunctionsImpl(ASTNode node) {
     super(node);
   }
 

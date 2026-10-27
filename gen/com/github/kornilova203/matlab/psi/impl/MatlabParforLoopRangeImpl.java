@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabParforLoopRangeImpl extends MatlabASTWrapperPsiElement implements MatlabParforLoopRange {
 
-  public MatlabParforLoopRangeImpl(@NotNull ASTNode node) {
+  public MatlabParforLoopRangeImpl(ASTNode node) {
     super(node);
   }
 

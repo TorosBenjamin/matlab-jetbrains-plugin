@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabPropertyImpl extends MatlabPropertyMixin implements MatlabProperty {
 
-  public MatlabPropertyImpl(@NotNull ASTNode node) {
+  public MatlabPropertyImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,25 +30,25 @@ public class MatlabPropertyImpl extends MatlabPropertyMixin implements MatlabPro
   @Override
   @Nullable
   public MatlabClassName getClassName() {
-    return findChildByClass(MatlabClassName.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabClassName.class);
   }
 
   @Override
   @Nullable
   public MatlabDefaultValue getDefaultValue() {
-    return findChildByClass(MatlabDefaultValue.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabDefaultValue.class);
   }
 
   @Override
   @Nullable
   public MatlabPropertySize getPropertySize() {
-    return findChildByClass(MatlabPropertySize.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabPropertySize.class);
   }
 
   @Override
   @Nullable
   public MatlabPropertyValidationFunctions getPropertyValidationFunctions() {
-    return findChildByClass(MatlabPropertyValidationFunctions.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabPropertyValidationFunctions.class);
   }
 
 }

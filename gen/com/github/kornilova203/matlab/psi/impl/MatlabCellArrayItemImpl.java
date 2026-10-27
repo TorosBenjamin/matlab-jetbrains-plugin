@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabCellArrayItemImpl extends MatlabASTWrapperPsiElement implements MatlabCellArrayItem {
 
-  public MatlabCellArrayItemImpl(@NotNull ASTNode node) {
+  public MatlabCellArrayItemImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabCellArrayItemImpl extends MatlabASTWrapperPsiElement implemen
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

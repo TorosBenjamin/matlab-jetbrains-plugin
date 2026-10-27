@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMethodsBlockImpl extends MatlabASTWrapperPsiElement implements MatlabMethodsBlock {
 
-  public MatlabMethodsBlockImpl(@NotNull ASTNode node) {
+  public MatlabMethodsBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabMethodsBlockImpl extends MatlabASTWrapperPsiElement implement
   @Override
   @Nullable
   public MatlabAttributes getAttributes() {
-    return findChildByClass(MatlabAttributes.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabAttributes.class);
   }
 
   @Override
   @Nullable
   public MatlabMethodsList getMethodsList() {
-    return findChildByClass(MatlabMethodsList.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabMethodsList.class);
   }
 
 }

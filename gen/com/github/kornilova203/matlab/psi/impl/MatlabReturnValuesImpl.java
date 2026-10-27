@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabReturnValuesImpl extends MatlabASTWrapperPsiElement implements MatlabReturnValues {
 
-  public MatlabReturnValuesImpl(@NotNull ASTNode node) {
+  public MatlabReturnValuesImpl(ASTNode node) {
     super(node);
   }
 

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabGetterOrSetterModifierImpl extends MatlabASTWrapperPsiElement implements MatlabGetterOrSetterModifier {
 
-  public MatlabGetterOrSetterModifierImpl(@NotNull ASTNode node) {
+  public MatlabGetterOrSetterModifierImpl(ASTNode node) {
     super(node);
   }
 

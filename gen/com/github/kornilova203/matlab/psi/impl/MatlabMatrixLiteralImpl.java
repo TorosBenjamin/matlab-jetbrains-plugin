@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMatrixLiteralImpl extends MatlabASTWrapperPsiElement implements MatlabMatrixLiteral {
 
-  public MatlabMatrixLiteralImpl(@NotNull ASTNode node) {
+  public MatlabMatrixLiteralImpl(ASTNode node) {
     super(node);
   }
 

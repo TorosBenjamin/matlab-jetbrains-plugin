@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabLambdaExprImpl extends MatlabLambdaExprMixin implements MatlabLambdaExpr {
 
-  public MatlabLambdaExprImpl(@NotNull ASTNode node) {
+  public MatlabLambdaExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabLambdaExprImpl extends MatlabLambdaExprMixin implements Matla
   @Override
   @Nullable
   public MatlabLambdaBody getLambdaBody() {
-    return findChildByClass(MatlabLambdaBody.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabLambdaBody.class);
   }
 
   @Override
   @NotNull
   public MatlabParameters getParameters() {
-    return findNotNullChildByClass(MatlabParameters.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabParameters.class));
   }
 
 }

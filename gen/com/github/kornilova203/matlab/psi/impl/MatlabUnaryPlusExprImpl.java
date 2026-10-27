@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabUnaryPlusExprImpl extends MatlabBinaryExprImpl implements MatlabUnaryPlusExpr {
 
-  public MatlabUnaryPlusExprImpl(@NotNull ASTNode node) {
+  public MatlabUnaryPlusExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabUnaryPlusExprImpl extends MatlabBinaryExprImpl implements Mat
   @Override
   @Nullable
   public MatlabExpr getExpr() {
-    return findChildByClass(MatlabExpr.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabExpr.class);
   }
 
 }

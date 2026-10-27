@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabLiteralExprImpl extends MatlabLiteralExprMixin implements MatlabLiteralExpr {
 
-  public MatlabLiteralExprImpl(@NotNull ASTNode node) {
+  public MatlabLiteralExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabLiteralExprImpl extends MatlabLiteralExprMixin implements Mat
   @Override
   @Nullable
   public MatlabCellArrayLiteral getCellArrayLiteral() {
-    return findChildByClass(MatlabCellArrayLiteral.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabCellArrayLiteral.class);
   }
 
   @Override
   @Nullable
   public MatlabMatrixLiteral getMatrixLiteral() {
-    return findChildByClass(MatlabMatrixLiteral.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabMatrixLiteral.class);
   }
 
   @Override

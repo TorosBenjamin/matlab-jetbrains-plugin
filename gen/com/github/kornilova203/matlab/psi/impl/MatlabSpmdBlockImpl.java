@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabSpmdBlockImpl extends MatlabASTWrapperPsiElement implements MatlabSpmdBlock {
 
-  public MatlabSpmdBlockImpl(@NotNull ASTNode node) {
+  public MatlabSpmdBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabSpmdBlockImpl extends MatlabASTWrapperPsiElement implements M
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
 }

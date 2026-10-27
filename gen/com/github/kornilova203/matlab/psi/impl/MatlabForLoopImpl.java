@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabForLoopImpl extends MatlabForLoopMixin implements MatlabForLoop {
 
-  public MatlabForLoopImpl(@NotNull ASTNode node) {
+  public MatlabForLoopImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabForLoopImpl extends MatlabForLoopMixin implements MatlabForLo
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabForLoopRange getForLoopRange() {
-    return findChildByClass(MatlabForLoopRange.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabForLoopRange.class);
   }
 
 }

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabDefaultValueImpl extends MatlabASTWrapperPsiElement implements MatlabDefaultValue {
 
-  public MatlabDefaultValueImpl(@NotNull ASTNode node) {
+  public MatlabDefaultValueImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabDefaultValueImpl extends MatlabASTWrapperPsiElement implement
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

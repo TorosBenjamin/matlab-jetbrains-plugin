@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabTransposeExprImpl extends MatlabBinaryExprImpl implements MatlabTransposeExpr {
 
-  public MatlabTransposeExprImpl(@NotNull ASTNode node) {
+  public MatlabTransposeExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabTransposeExprImpl extends MatlabBinaryExprImpl implements Mat
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

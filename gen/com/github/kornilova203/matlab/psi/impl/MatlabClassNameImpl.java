@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabClassNameImpl extends MatlabASTWrapperPsiElement implements MatlabClassName {
 
-  public MatlabClassNameImpl(@NotNull ASTNode node) {
+  public MatlabClassNameImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabClassNameImpl extends MatlabASTWrapperPsiElement implements M
   @Override
   @NotNull
   public MatlabRefExpr getRefExpr() {
-    return findNotNullChildByClass(MatlabRefExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabRefExpr.class));
   }
 
 }

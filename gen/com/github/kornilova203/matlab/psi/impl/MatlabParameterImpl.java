@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabParameterImpl extends MatlabParameterMixin implements MatlabParameter {
 
-  public MatlabParameterImpl(@NotNull ASTNode node) {
+  public MatlabParameterImpl(ASTNode node) {
     super(node);
   }
 

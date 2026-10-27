@@ -10,22 +10,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.kornilova203.matlab.psi.MatlabTypes.*;
 import com.github.kornilova203.matlab.psi.MatlabStubbedGlobalVariable;
 import com.github.kornilova203.matlab.psi.*;
-import com.github.kornilova203.matlab.stub.MatlabGlobalVariableStub;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.tree.IElementType;
+import com.github.kornilova203.matlab.stub.MatlabGlobalVariableStub;
 
 public class MatlabGlobalVariableDeclarationImpl extends MatlabStubbedGlobalVariable implements MatlabGlobalVariableDeclaration {
 
-  public MatlabGlobalVariableDeclarationImpl(@NotNull MatlabGlobalVariableStub stub, @NotNull IStubElementType<?, ?> type) {
-    super(stub, type);
-  }
-
-  public MatlabGlobalVariableDeclarationImpl(@NotNull ASTNode node) {
+  public MatlabGlobalVariableDeclarationImpl(ASTNode node) {
     super(node);
   }
 
-  public MatlabGlobalVariableDeclarationImpl(@Nullable MatlabGlobalVariableStub stub, @Nullable IElementType type, @Nullable ASTNode node) {
-    super(stub, type, node);
+  public MatlabGlobalVariableDeclarationImpl(MatlabGlobalVariableStub stub, IStubElementType stubType) {
+    super(stub, stubType);
   }
 
   public void accept(@NotNull MatlabVisitor visitor) {

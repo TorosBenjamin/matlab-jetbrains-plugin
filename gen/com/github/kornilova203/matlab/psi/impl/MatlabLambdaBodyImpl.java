@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabLambdaBodyImpl extends MatlabASTWrapperPsiElement implements MatlabLambdaBody {
 
-  public MatlabLambdaBodyImpl(@NotNull ASTNode node) {
+  public MatlabLambdaBodyImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabLambdaBodyImpl extends MatlabASTWrapperPsiElement implements 
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

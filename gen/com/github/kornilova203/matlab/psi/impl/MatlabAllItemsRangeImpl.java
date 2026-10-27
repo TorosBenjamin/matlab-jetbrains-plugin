@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabAllItemsRangeImpl extends MatlabExprImpl implements MatlabAllItemsRange {
 
-  public MatlabAllItemsRangeImpl(@NotNull ASTNode node) {
+  public MatlabAllItemsRangeImpl(ASTNode node) {
     super(node);
   }
 

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabPropertySizeImpl extends MatlabASTWrapperPsiElement implements MatlabPropertySize {
 
-  public MatlabPropertySizeImpl(@NotNull ASTNode node) {
+  public MatlabPropertySizeImpl(ASTNode node) {
     super(node);
   }
 

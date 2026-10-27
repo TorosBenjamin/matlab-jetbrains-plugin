@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabParforLoopImpl extends MatlabParforLoopMixin implements MatlabParforLoop {
 
-  public MatlabParforLoopImpl(@NotNull ASTNode node) {
+  public MatlabParforLoopImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabParforLoopImpl extends MatlabParforLoopMixin implements Matla
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabParforLoopRange getParforLoopRange() {
-    return findChildByClass(MatlabParforLoopRange.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabParforLoopRange.class);
   }
 
 }

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabCaseExpressionImpl extends MatlabASTWrapperPsiElement implements MatlabCaseExpression {
 
-  public MatlabCaseExpressionImpl(@NotNull ASTNode node) {
+  public MatlabCaseExpressionImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabCaseExpressionImpl extends MatlabASTWrapperPsiElement impleme
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabWhileLoopConditionImpl extends MatlabASTWrapperPsiElement implements MatlabWhileLoopCondition {
 
-  public MatlabWhileLoopConditionImpl(@NotNull ASTNode node) {
+  public MatlabWhileLoopConditionImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabWhileLoopConditionImpl extends MatlabASTWrapperPsiElement imp
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

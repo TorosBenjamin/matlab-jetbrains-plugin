@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabCellArrayAccessExprImpl extends MatlabExprImpl implements MatlabCellArrayAccessExpr {
 
-  public MatlabCellArrayAccessExprImpl(@NotNull ASTNode node) {
+  public MatlabCellArrayAccessExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabCellArrayAccessExprImpl extends MatlabExprImpl implements Mat
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMatrixAndExprImpl extends MatlabBinaryExprImpl implements MatlabMatrixAndExpr {
 
-  public MatlabMatrixAndExprImpl(@NotNull ASTNode node) {
+  public MatlabMatrixAndExprImpl(ASTNode node) {
     super(node);
   }
 

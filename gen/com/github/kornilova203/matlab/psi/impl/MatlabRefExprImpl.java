@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabRefExprImpl extends MatlabRefExprMixin implements MatlabRefExpr {
 
-  public MatlabRefExprImpl(@NotNull ASTNode node) {
+  public MatlabRefExprImpl(ASTNode node) {
     super(node);
   }
 

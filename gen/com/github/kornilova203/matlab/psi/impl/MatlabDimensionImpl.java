@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabDimensionImpl extends MatlabASTWrapperPsiElement implements MatlabDimension {
 
-  public MatlabDimensionImpl(@NotNull ASTNode node) {
+  public MatlabDimensionImpl(ASTNode node) {
     super(node);
   }
 

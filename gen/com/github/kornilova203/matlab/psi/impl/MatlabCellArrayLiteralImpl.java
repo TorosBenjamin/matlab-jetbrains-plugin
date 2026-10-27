@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabCellArrayLiteralImpl extends MatlabASTWrapperPsiElement implements MatlabCellArrayLiteral {
 
-  public MatlabCellArrayLiteralImpl(@NotNull ASTNode node) {
+  public MatlabCellArrayLiteralImpl(ASTNode node) {
     super(node);
   }
 

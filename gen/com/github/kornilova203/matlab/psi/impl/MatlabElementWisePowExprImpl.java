@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabElementWisePowExprImpl extends MatlabBinaryExprImpl implements MatlabElementWisePowExpr {
 
-  public MatlabElementWisePowExprImpl(@NotNull ASTNode node) {
+  public MatlabElementWisePowExprImpl(ASTNode node) {
     super(node);
   }
 

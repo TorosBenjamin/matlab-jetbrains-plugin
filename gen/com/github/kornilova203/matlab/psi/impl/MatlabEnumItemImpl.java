@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabEnumItemImpl extends MatlabDeclarationBase implements MatlabEnumItem {
 
-  public MatlabEnumItemImpl(@NotNull ASTNode node) {
+  public MatlabEnumItemImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabEnumItemImpl extends MatlabDeclarationBase implements MatlabE
   @Override
   @Nullable
   public MatlabArguments getArguments() {
-    return findChildByClass(MatlabArguments.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabArguments.class);
   }
 
 }

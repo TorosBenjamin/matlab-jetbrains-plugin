@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMetaClassExprImpl extends MatlabBinaryExprImpl implements MatlabMetaClassExpr {
 
-  public MatlabMetaClassExprImpl(@NotNull ASTNode node) {
+  public MatlabMetaClassExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabMetaClassExprImpl extends MatlabBinaryExprImpl implements Mat
   @Override
   @Nullable
   public MatlabRefExpr getRefExpr() {
-    return findChildByClass(MatlabRefExpr.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabRefExpr.class);
   }
 
 }

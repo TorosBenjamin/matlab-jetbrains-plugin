@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabAttributesImpl extends MatlabASTWrapperPsiElement implements MatlabAttributes {
 
-  public MatlabAttributesImpl(@NotNull ASTNode node) {
+  public MatlabAttributesImpl(ASTNode node) {
     super(node);
   }
 

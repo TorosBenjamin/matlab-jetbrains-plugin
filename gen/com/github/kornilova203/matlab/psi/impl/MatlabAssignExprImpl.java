@@ -13,11 +13,10 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabAssignExprImpl extends MatlabAssignExprMixin implements MatlabAssignExpr {
 
-  public MatlabAssignExprImpl(@NotNull ASTNode node) {
+  public MatlabAssignExprImpl(ASTNode node) {
     super(node);
   }
 
-  @Override
   public void accept(@NotNull MatlabVisitor visitor) {
     visitor.visitAssignExpr(this);
   }

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMatrixItemImpl extends MatlabMatrixItemMixin implements MatlabMatrixItem {
 
-  public MatlabMatrixItemImpl(@NotNull ASTNode node) {
+  public MatlabMatrixItemImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabMatrixItemImpl extends MatlabMatrixItemMixin implements Matla
   @Override
   @Nullable
   public MatlabExpr getExpr() {
-    return findChildByClass(MatlabExpr.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabExpr.class);
   }
 
 }

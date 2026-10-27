@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabCaseBlockImpl extends MatlabASTWrapperPsiElement implements MatlabCaseBlock {
 
-  public MatlabCaseBlockImpl(@NotNull ASTNode node) {
+  public MatlabCaseBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabCaseBlockImpl extends MatlabASTWrapperPsiElement implements M
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabCaseExpression getCaseExpression() {
-    return findChildByClass(MatlabCaseExpression.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabCaseExpression.class);
   }
 
 }

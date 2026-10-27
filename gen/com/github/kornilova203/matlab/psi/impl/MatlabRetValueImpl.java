@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabRetValueImpl extends MatlabRetValueMixin implements MatlabRetValue {
 
-  public MatlabRetValueImpl(@NotNull ASTNode node) {
+  public MatlabRetValueImpl(ASTNode node) {
     super(node);
   }
 

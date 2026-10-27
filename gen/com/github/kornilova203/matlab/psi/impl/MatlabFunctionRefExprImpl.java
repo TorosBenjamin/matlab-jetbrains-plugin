@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabFunctionRefExprImpl extends MatlabBinaryExprImpl implements MatlabFunctionRefExpr {
 
-  public MatlabFunctionRefExprImpl(@NotNull ASTNode node) {
+  public MatlabFunctionRefExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabFunctionRefExprImpl extends MatlabBinaryExprImpl implements M
   @Override
   @Nullable
   public MatlabRefExpr getRefExpr() {
-    return findChildByClass(MatlabRefExpr.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabRefExpr.class);
   }
 
 }

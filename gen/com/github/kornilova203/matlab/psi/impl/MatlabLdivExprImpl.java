@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabLdivExprImpl extends MatlabBinaryExprImpl implements MatlabLdivExpr {
 
-  public MatlabLdivExprImpl(@NotNull ASTNode node) {
+  public MatlabLdivExprImpl(ASTNode node) {
     super(node);
   }
 

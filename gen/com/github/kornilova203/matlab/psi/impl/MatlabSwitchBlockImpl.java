@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabSwitchBlockImpl extends MatlabASTWrapperPsiElement implements MatlabSwitchBlock {
 
-  public MatlabSwitchBlockImpl(@NotNull ASTNode node) {
+  public MatlabSwitchBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -36,13 +36,13 @@ public class MatlabSwitchBlockImpl extends MatlabASTWrapperPsiElement implements
   @Override
   @Nullable
   public MatlabOtherwiseBlock getOtherwiseBlock() {
-    return findChildByClass(MatlabOtherwiseBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabOtherwiseBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabSwitchExpression getSwitchExpression() {
-    return findChildByClass(MatlabSwitchExpression.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabSwitchExpression.class);
   }
 
 }

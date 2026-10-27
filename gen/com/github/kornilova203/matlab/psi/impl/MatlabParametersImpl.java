@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabParametersImpl extends MatlabParametersListImpl implements MatlabParameters {
 
-  public MatlabParametersImpl(@NotNull ASTNode node) {
+  public MatlabParametersImpl(ASTNode node) {
     super(node);
   }
 

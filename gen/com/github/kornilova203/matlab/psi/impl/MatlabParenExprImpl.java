@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabParenExprImpl extends MatlabExprImpl implements MatlabParenExpr {
 
-  public MatlabParenExprImpl(@NotNull ASTNode node) {
+  public MatlabParenExprImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabParenExprImpl extends MatlabExprImpl implements MatlabParenEx
   @Override
   @Nullable
   public MatlabExpr getExpr() {
-    return findChildByClass(MatlabExpr.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabExpr.class);
   }
 
 }

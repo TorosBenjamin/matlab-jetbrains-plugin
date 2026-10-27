@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabCatchBlockImpl extends MatlabCatchBlockMixin implements MatlabCatchBlock {
 
-  public MatlabCatchBlockImpl(@NotNull ASTNode node) {
+  public MatlabCatchBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabCatchBlockImpl extends MatlabCatchBlockMixin implements Matla
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
 }

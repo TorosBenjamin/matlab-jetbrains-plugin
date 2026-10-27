@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabEnumerationBlockImpl extends MatlabASTWrapperPsiElement implements MatlabEnumerationBlock {
 
-  public MatlabEnumerationBlockImpl(@NotNull ASTNode node) {
+  public MatlabEnumerationBlockImpl(ASTNode node) {
     super(node);
   }
 

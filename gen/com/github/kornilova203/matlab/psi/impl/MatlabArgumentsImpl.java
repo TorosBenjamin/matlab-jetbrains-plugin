@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabArgumentsImpl extends MatlabASTWrapperPsiElement implements MatlabArguments {
 
-  public MatlabArgumentsImpl(@NotNull ASTNode node) {
+  public MatlabArgumentsImpl(ASTNode node) {
     super(node);
   }
 

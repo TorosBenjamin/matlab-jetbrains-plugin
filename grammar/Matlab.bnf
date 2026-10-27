@@ -1,4 +1,5 @@
 {
+  generate=[names="short" java="8"]
   parserClass="com.github.kornilova203.matlab.MatlabParser"
   parserUtilClass="com.github.kornilova203.matlab.MatlabParserUtil"
 
@@ -16,6 +17,9 @@
   elementTypeClass("function_declaration")="com.github.kornilova203.matlab.stub.MatlabFunctionDeclarationElementType"
   elementTypeClass("class_declaration")="com.github.kornilova203.matlab.stub.MatlabClassDeclarationElementType"
   elementTypeClass("global_variable_declaration")="com.github.kornilova203.matlab.stub.MatlabGlobalVariableElementType"
+  stubClass("function_declaration")="com.github.kornilova203.matlab.stub.MatlabFunctionDeclarationStub"
+  stubClass("class_declaration")="com.github.kornilova203.matlab.stub.MatlabClassDeclarationStub"
+  stubClass("global_variable_declaration")="com.github.kornilova203.matlab.stub.MatlabGlobalVariableStub"
 
   parserImports=[
     "static com.github.kornilova203.matlab.MatlabElementTypes.*"

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabBlockImpl extends MatlabBlockMixin implements MatlabBlock {
 
-  public MatlabBlockImpl(@NotNull ASTNode node) {
+  public MatlabBlockImpl(ASTNode node) {
     super(node);
   }
 

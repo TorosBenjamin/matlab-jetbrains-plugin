@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabForLoopRangeImpl extends MatlabASTWrapperPsiElement implements MatlabForLoopRange {
 
-  public MatlabForLoopRangeImpl(@NotNull ASTNode node) {
+  public MatlabForLoopRangeImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabForLoopRangeImpl extends MatlabASTWrapperPsiElement implement
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

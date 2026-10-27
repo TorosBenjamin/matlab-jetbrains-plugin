@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabLessExprImpl extends MatlabBinaryExprImpl implements MatlabLessExpr {
 
-  public MatlabLessExprImpl(@NotNull ASTNode node) {
+  public MatlabLessExprImpl(ASTNode node) {
     super(node);
   }
 

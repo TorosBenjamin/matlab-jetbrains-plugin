@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabConditionImpl extends MatlabASTWrapperPsiElement implements MatlabCondition {
 
-  public MatlabConditionImpl(@NotNull ASTNode node) {
+  public MatlabConditionImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabConditionImpl extends MatlabASTWrapperPsiElement implements M
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

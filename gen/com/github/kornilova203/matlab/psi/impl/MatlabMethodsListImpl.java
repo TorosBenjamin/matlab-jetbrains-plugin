@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabMethodsListImpl extends MatlabASTWrapperPsiElement implements MatlabMethodsList {
 
-  public MatlabMethodsListImpl(@NotNull ASTNode node) {
+  public MatlabMethodsListImpl(ASTNode node) {
     super(node);
   }
 

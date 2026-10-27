@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabBinaryExprImpl extends MatlabBinaryExprMixin implements MatlabBinaryExpr {
 
-  public MatlabBinaryExprImpl(@NotNull ASTNode node) {
+  public MatlabBinaryExprImpl(ASTNode node) {
     super(node);
   }
 

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabElseifBlockImpl extends MatlabASTWrapperPsiElement implements MatlabElseifBlock {
 
-  public MatlabElseifBlockImpl(@NotNull ASTNode node) {
+  public MatlabElseifBlockImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,13 +30,13 @@ public class MatlabElseifBlockImpl extends MatlabASTWrapperPsiElement implements
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabCondition getCondition() {
-    return findChildByClass(MatlabCondition.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabCondition.class);
   }
 
 }

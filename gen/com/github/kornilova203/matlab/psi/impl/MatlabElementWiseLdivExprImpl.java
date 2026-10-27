@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabElementWiseLdivExprImpl extends MatlabBinaryExprImpl implements MatlabElementWiseLdivExpr {
 
-  public MatlabElementWiseLdivExprImpl(@NotNull ASTNode node) {
+  public MatlabElementWiseLdivExprImpl(ASTNode node) {
     super(node);
   }
 

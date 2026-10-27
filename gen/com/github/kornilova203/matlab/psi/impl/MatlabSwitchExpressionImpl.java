@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabSwitchExpressionImpl extends MatlabASTWrapperPsiElement implements MatlabSwitchExpression {
 
-  public MatlabSwitchExpressionImpl(@NotNull ASTNode node) {
+  public MatlabSwitchExpressionImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabSwitchExpressionImpl extends MatlabASTWrapperPsiElement imple
   @Override
   @NotNull
   public MatlabExpr getExpr() {
-    return findNotNullChildByClass(MatlabExpr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, MatlabExpr.class));
   }
 
 }

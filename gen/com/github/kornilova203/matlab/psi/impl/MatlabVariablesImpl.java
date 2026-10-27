@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabVariablesImpl extends MatlabASTWrapperPsiElement implements MatlabVariables {
 
-  public MatlabVariablesImpl(@NotNull ASTNode node) {
+  public MatlabVariablesImpl(ASTNode node) {
     super(node);
   }
 

@@ -10,22 +10,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.kornilova203.matlab.psi.MatlabTypes.*;
 import com.github.kornilova203.matlab.psi.MatlabStubbedFunctionDeclaration;
 import com.github.kornilova203.matlab.psi.*;
-import com.github.kornilova203.matlab.stub.MatlabFunctionDeclarationStub;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.tree.IElementType;
+import com.github.kornilova203.matlab.stub.MatlabFunctionDeclarationStub;
 
 public class MatlabFunctionDeclarationImpl extends MatlabStubbedFunctionDeclaration implements MatlabFunctionDeclaration {
 
-  public MatlabFunctionDeclarationImpl(@NotNull MatlabFunctionDeclarationStub stub, @NotNull IStubElementType<?, ?> type) {
-    super(stub, type);
-  }
-
-  public MatlabFunctionDeclarationImpl(@NotNull ASTNode node) {
+  public MatlabFunctionDeclarationImpl(ASTNode node) {
     super(node);
   }
 
-  public MatlabFunctionDeclarationImpl(@Nullable MatlabFunctionDeclarationStub stub, @Nullable IElementType type, @Nullable ASTNode node) {
-    super(stub, type, node);
+  public MatlabFunctionDeclarationImpl(MatlabFunctionDeclarationStub stub, IStubElementType stubType) {
+    super(stub, stubType);
   }
 
   public void accept(@NotNull MatlabVisitor visitor) {
@@ -41,25 +36,25 @@ public class MatlabFunctionDeclarationImpl extends MatlabStubbedFunctionDeclarat
   @Override
   @Nullable
   public MatlabBlock getBlock() {
-    return findChildByClass(MatlabBlock.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabBlock.class);
   }
 
   @Override
   @Nullable
   public MatlabGetterOrSetterModifier getGetterOrSetterModifier() {
-    return findChildByClass(MatlabGetterOrSetterModifier.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabGetterOrSetterModifier.class);
   }
 
   @Override
   @Nullable
   public MatlabParameters getParameters() {
-    return findChildByClass(MatlabParameters.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabParameters.class);
   }
 
   @Override
   @Nullable
   public MatlabReturnValues getReturnValues() {
-    return findChildByClass(MatlabReturnValues.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabReturnValues.class);
   }
 
 }

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabFileOperationImpl extends MatlabASTWrapperPsiElement implements MatlabFileOperation {
 
-  public MatlabFileOperationImpl(@NotNull ASTNode node) {
+  public MatlabFileOperationImpl(ASTNode node) {
     super(node);
   }
 
@@ -30,7 +30,7 @@ public class MatlabFileOperationImpl extends MatlabASTWrapperPsiElement implemen
   @Override
   @Nullable
   public MatlabVariables getVariables() {
-    return findChildByClass(MatlabVariables.class);
+    return PsiTreeUtil.getChildOfType(this, MatlabVariables.class);
   }
 
 }

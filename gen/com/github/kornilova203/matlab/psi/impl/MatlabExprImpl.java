@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public abstract class MatlabExprImpl extends MatlabASTWrapperPsiElement implements MatlabExpr {
 
-  public MatlabExprImpl(@NotNull ASTNode node) {
+  public MatlabExprImpl(ASTNode node) {
     super(node);
   }
 

@@ -13,7 +13,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabEventsListImpl extends MatlabASTWrapperPsiElement implements MatlabEventsList {
 
-  public MatlabEventsListImpl(@NotNull ASTNode node) {
+  public MatlabEventsListImpl(ASTNode node) {
     super(node);
   }
 

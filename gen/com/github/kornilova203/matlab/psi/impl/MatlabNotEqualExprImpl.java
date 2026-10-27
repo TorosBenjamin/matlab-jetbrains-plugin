@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabNotEqualExprImpl extends MatlabBinaryExprImpl implements MatlabNotEqualExpr {
 
-  public MatlabNotEqualExprImpl(@NotNull ASTNode node) {
+  public MatlabNotEqualExprImpl(ASTNode node) {
     super(node);
   }
 

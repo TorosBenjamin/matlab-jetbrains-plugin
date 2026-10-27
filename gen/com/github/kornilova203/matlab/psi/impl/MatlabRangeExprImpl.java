@@ -12,7 +12,7 @@ import com.github.kornilova203.matlab.psi.*;
 
 public class MatlabRangeExprImpl extends MatlabExprImpl implements MatlabRangeExpr {
 
-  public MatlabRangeExprImpl(@NotNull ASTNode node) {
+  public MatlabRangeExprImpl(ASTNode node) {
     super(node);
   }
 
