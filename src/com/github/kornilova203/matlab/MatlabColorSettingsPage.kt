@@ -24,6 +24,12 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Object reference (obj in methods)", MatlabAnnotator.OBJECT_REFERENCE),
         AttributesDescriptor("Field (obj.Width)", MatlabAnnotator.FIELD),
         AttributesDescriptor("Method call (obj.move())", MatlabAnnotator.METHOD_CALL),
+        AttributesDescriptor("Constant property", MatlabAnnotator.CONSTANT),
+        AttributesDescriptor("Type (double, superclass)", MatlabAnnotator.TYPE),
+        AttributesDescriptor("Attribute name (SetAccess)", MatlabAnnotator.ATTRIBUTE),
+        AttributesDescriptor("Attribute value (private)", MatlabAnnotator.ATTRIBUTE_VALUE),
+        AttributesDescriptor("Event", MatlabAnnotator.EVENT),
+        AttributesDescriptor("Enumeration member", MatlabAnnotator.ENUM_MEMBER),
         AttributesDescriptor("Command argument (hold on)", MatlabAnnotator.COMMAND_ARGUMENT),
         AttributesDescriptor("Function declaration", MatlabAnnotator.FUNCTION_DECLARATION),
         AttributesDescriptor("Class declaration", MatlabAnnotator.CLASS_DECLARATION),
@@ -41,6 +47,11 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         "obj" to MatlabAnnotator.OBJECT_REFERENCE,
         "field" to MatlabAnnotator.FIELD,
         "call" to MatlabAnnotator.METHOD_CALL,
+        "const" to MatlabAnnotator.CONSTANT,
+        "type" to MatlabAnnotator.TYPE,
+        "attr" to MatlabAnnotator.ATTRIBUTE,
+        "val" to MatlabAnnotator.ATTRIBUTE_VALUE,
+        "event" to MatlabAnnotator.EVENT,
         "cmd" to MatlabAnnotator.COMMAND_ARGUMENT,
     )
 
@@ -52,10 +63,16 @@ class MatlabColorSettingsPage : ColorSettingsPage {
     override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = tags
 
     override fun getDemoText(): String = """
-        classdef <cls>Counter</cls> < handle
+        classdef <cls>Counter</cls> < <type>handle</type>
             % Counts things.
-            <blk>properties</blk>
-                <id>Count</id> = 0
+            <blk>properties</blk> (<attr>SetAccess</attr> = <val>private</val>)
+                <field>Count</field> (1,1) <type>double</type> = 0
+            end
+            <blk>properties</blk> (<attr>Constant</attr>)
+                <const>Step</const> = 1
+            end
+            <blk>events</blk>
+                <event>Changed</event>
             end
             <blk>methods</blk>
                 function <fn>increment</fn>(<obj>obj</obj>, <param>step</param>)

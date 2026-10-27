@@ -2,6 +2,11 @@ package com.github.kornilova203.matlab.completion
 
 import com.github.kornilova203.matlab.completion.MatlabKeywordCompletionContributor.Companion.M
 import com.github.kornilova203.matlab.psi.MatlabClassDeclaration
+import com.github.kornilova203.matlab.psi.MatlabQualifiedExpr
+import com.github.kornilova203.matlab.psi.MatlabRefExpr
+import com.github.kornilova203.matlab.psi.MatlabTypedExpr
+import com.github.kornilova203.matlab.psi.types.MatlabTypeClass
+import com.github.kornilova203.matlab.processDeclarationsInClass
 import com.github.kornilova203.matlab.psi.MatlabDeclaration
 import com.github.kornilova203.matlab.psi.MatlabFunctionDeclaration
 import com.github.kornilova203.matlab.stub.MatlabClassDeclarationIndex
@@ -27,11 +32,25 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
                 object : CompletionProvider<CompletionParameters>() {
                     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                         val processor = MatlabCompletionScopeProcessor(result)
+                        if (completeMember(parameters.position, processor)) return
                         val position = parameters.originalPosition ?: return
                         PsiTreeUtil.treeWalkUp(processor, position, parameters.originalFile, ResolveState.initial())
                         addCompletionsFromStubs(position, result)
                     }
                 })
+    }
+
+    /**
+     * After a dot (`obj.<caret>`) offer the members of the object's class, not the names in scope.
+     * Returns true if the caret is after a dot.
+     */
+    private fun completeMember(position: PsiElement, processor: MatlabCompletionScopeProcessor): Boolean {
+        val ref = position.parent as? MatlabRefExpr ?: return false
+        val qualified = ref.parent as? MatlabQualifiedExpr ?: return false
+        if (qualified.lastChild != ref) return false
+        val type = (qualified.firstChild as? MatlabTypedExpr)?.getType()
+        if (type is MatlabTypeClass) processDeclarationsInClass(processor, ResolveState.initial(), type)
+        return true
     }
 
     private fun addCompletionsFromStubs(position: PsiElement, result: CompletionResultSet) {

@@ -22,8 +22,6 @@ abstract class MatlabParameterMixin(node: ASTNode) : MatlabASTWrapperPsiElement(
 
     override fun getTextOffset(): Int = nameIdentifier?.node?.startOffset ?: super.getTextOffset()
 
-    override fun getType(): MatlabType {
-        val type = this.parentOfTypes(MatlabStubbedFunctionDeclaration::class)?.getType()
-        return if (type is MatlabTypeFunction) type.getReturnType() else MatlabTypeUnknown()
-    }
+    // Only the object variable (obj in `function area(obj)`) has a known type: its class.
+    override fun getType(): MatlabType = objectClassOf(this)?.let(::MatlabTypeClass) ?: MatlabTypeUnknown()
 }

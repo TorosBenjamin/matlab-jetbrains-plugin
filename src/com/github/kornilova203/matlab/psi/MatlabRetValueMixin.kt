@@ -22,7 +22,8 @@ abstract class MatlabRetValueMixin(node: ASTNode) : MatlabASTWrapperPsiElement(n
     override fun getTextOffset(): Int = nameIdentifier?.node?.startOffset ?: super.getTextOffset()
 
     override fun getType(): MatlabType {
-        val cl = isEqualFirstParameter()
+        // Constructor output (obj in `function obj = Shape(...)`) or `obj = setX(obj, v)`.
+        val cl = objectClassOf(this) ?: isEqualFirstParameter()
         return if (cl != null) MatlabTypeClass(cl) else MatlabTypeUnknown()
     }
 

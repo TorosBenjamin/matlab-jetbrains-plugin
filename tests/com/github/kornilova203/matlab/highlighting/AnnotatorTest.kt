@@ -50,7 +50,7 @@ class AnnotatorTest : BasePlatformTestCase() {
         end
         """.trimIndent()
 
-    fun testFields() = assertEquals(listOf("Width", "Width"), coloredWith(shape, MatlabAnnotator.FIELD))
+    fun testFields() = assertEquals(listOf("Width", "Width", "Width"), coloredWith(shape, MatlabAnnotator.FIELD))
 
     fun testMethodCalls() = assertEquals(listOf("resize"), coloredWith(shape, MatlabAnnotator.METHOD_CALL))
 
@@ -63,4 +63,50 @@ class AnnotatorTest : BasePlatformTestCase() {
         listOf("obj", "obj", "obj", "obj", "obj"),
         coloredWith(shape, MatlabAnnotator.OBJECT_REFERENCE)
     )
+
+    private val classBody = """
+        classdef Shape < handle & matlab.mixin.Copyable
+            properties
+                Width (1,1) double = 1
+            end
+            properties (SetAccess = private, ~Hidden)
+                Kind string = "rect"
+            end
+            properties (Constant)
+                Version = 2
+            end
+            events
+                Resized
+            end
+            methods
+                function a = area(obj)
+                    a = obj.Width * obj.Version;
+                    obj.describe;
+                    k = obj.Kind;
+                end
+                function describe(obj)
+                end
+            end
+        end
+        """.trimIndent()
+
+    fun testPropertyDeclarationsAndUses() = assertEquals(
+        listOf("Width", "Kind", "Width", "Kind"), coloredWith(classBody, MatlabAnnotator.FIELD))
+
+    fun testConstantProperty() = assertEquals(
+        listOf("Version", "Version"), coloredWith(classBody, MatlabAnnotator.CONSTANT))
+
+    fun testTypes() = assertEquals(
+        listOf("handle", "matlab", "mixin", "Copyable", "double", "string"), coloredWith(classBody, MatlabAnnotator.TYPE))
+
+    fun testAttributes() = assertEquals(
+        listOf("SetAccess", "Hidden", "Constant"), coloredWith(classBody, MatlabAnnotator.ATTRIBUTE))
+
+    fun testAttributeValues() = assertEquals(listOf("private"), coloredWith(classBody, MatlabAnnotator.ATTRIBUTE_VALUE))
+
+    fun testEvents() = assertEquals(listOf("Resized"), coloredWith(classBody, MatlabAnnotator.EVENT))
+
+    /** obj.describe without parentheses is a method call, found by looking up describe in the class. */
+    fun testMethodCalledWithoutParentheses() = assertEquals(
+        listOf("describe"), coloredWith(classBody, MatlabAnnotator.METHOD_CALL))
 }

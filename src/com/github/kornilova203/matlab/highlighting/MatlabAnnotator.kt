@@ -33,6 +33,18 @@ class MatlabAnnotator : Annotator {
         val PARAMETER = createTextAttributesKey("MATLAB.PARAMETER", DefaultLanguageHighlighterColors.PARAMETER)
         /** The object a method works on (first parameter, constructor output), like `this`/`self`. */
         val OBJECT_REFERENCE = createTextAttributesKey("MATLAB.OBJECT_REFERENCE", DefaultLanguageHighlighterColors.KEYWORD)
+        /** Constant properties, like `static final` fields in Java. */
+        val CONSTANT = createTextAttributesKey("MATLAB.CONSTANT", DefaultLanguageHighlighterColors.CONSTANT)
+        /** `double` in `Width (1,1) double`, superclasses, ?ClassName */
+        val TYPE = createTextAttributesKey("MATLAB.TYPE", DefaultLanguageHighlighterColors.CLASS_REFERENCE)
+        /** `SetAccess` in `properties (SetAccess = private)` */
+        val ATTRIBUTE = createTextAttributesKey("MATLAB.ATTRIBUTE", DefaultLanguageHighlighterColors.METADATA)
+        /** `private` in `properties (SetAccess = private)` */
+        val ATTRIBUTE_VALUE = createTextAttributesKey("MATLAB.ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.KEYWORD)
+        val EVENT = createTextAttributesKey("MATLAB.EVENT", DefaultLanguageHighlighterColors.STATIC_FIELD)
+        val ENUM_MEMBER = createTextAttributesKey("MATLAB.ENUM_MEMBER", DefaultLanguageHighlighterColors.CONSTANT)
+
+        private val ATTRIBUTE_VALUES = setOf("public", "private", "protected", "immutable", "true", "false")
     }
 
     // Called once per PSI element (leaves included), so only look at the element itself.
@@ -58,10 +70,15 @@ class MatlabAnnotator : Annotator {
     }
 
     private fun identifierColor(identifier: PsiElement): TextAttributesKey {
+        // Declarations: decided by position in the tree.
         when (val parent = identifier.parent) {
+            is MatlabProperty -> return if (isConstantProperty(parent)) CONSTANT else FIELD
+            is MatlabEnumItem -> return ENUM_MEMBER
             is MatlabParameter -> return if (isObjectReference(parent)) OBJECT_REFERENCE else PARAMETER
             is MatlabRetValue -> return if (isObjectReference(parent)) OBJECT_REFERENCE else ID
             is MatlabRefExpr -> {
+                positionColor(parent)?.let { return it }
+                // Uses: decided by what the name resolves to.
                 memberColor(parent)?.let { return it }
                 return when (val target = parent.reference?.resolve()) {
                     is MatlabParameter -> if (isObjectReference(target)) OBJECT_REFERENCE else PARAMETER
@@ -73,49 +90,39 @@ class MatlabAnnotator : Annotator {
         return ID
     }
 
-    /** Field or method name after a dot: `obj.Width`, `obj.move(1, 1)`. */
+    /** Names whose role follows from where they are: types, attributes, events. */
+    private fun positionColor(ref: MatlabRefExpr): TextAttributesKey? = when (val parent = ref.parent) {
+        is MatlabClassName, is MatlabSuperClasses, is MatlabMetaClassExpr -> TYPE
+        is MatlabEventsList -> EVENT
+        is MatlabAttribute -> when {
+            parent.firstChild == ref || PsiTreeUtil.skipWhitespacesBackward(ref).elementType == TILDA -> ATTRIBUTE
+            ref.text in ATTRIBUTE_VALUES -> ATTRIBUTE_VALUE
+            else -> null
+        }
+        else -> null
+    }
+
+    /**
+     * Name after a dot: `obj.Width`, `obj.move(1, 1)`, `obj.area` (method called without parentheses),
+     * `Shape.Version` (constant). Without parentheses the syntax is the same for fields and methods,
+     * so look up what the name resolves to in the object's class.
+     */
     private fun memberColor(ref: MatlabRefExpr): TextAttributesKey? {
         val call = ref.parent as? MatlabFunctionExpr
         val isCallee = call != null && call.firstChild == ref
         val node = if (isCallee) call!! else ref
         if (PsiTreeUtil.skipWhitespacesBackward(node).elementType != DOT) return null
-        return if (isCallee) METHOD_CALL else FIELD
-    }
-
-    private fun isObjectReference(declaration: PsiElement): Boolean {
-        val function = PsiTreeUtil.getParentOfType(declaration, MatlabFunctionDeclaration::class.java) ?: return false
-        if (declaration is MatlabParameter) {
-            if (function.parameters?.parameterList?.firstOrNull() != declaration) return false
-            if (isInClassFolder(function)) return true
-            return isMethod(function) && !isStatic(function) && !isConstructor(function)
-        }
-        if (declaration is MatlabRetValue) {
-            return isMethod(function) && isConstructor(function)
-        }
-        return false
-    }
-
-    private fun isMethod(function: MatlabFunctionDeclaration) = function.parent is MatlabMethodsList
-
-    private fun isStatic(function: MatlabFunctionDeclaration): Boolean {
-        val attributes = (function.parent.parent as? MatlabMethodsBlock)?.attributes?.attributeList ?: return false
-        return attributes.any { attr ->
-            val text = attr.text.replace(" ", "")
-            text == "Static" || text == "Static=true"
+        if (isCallee) return METHOD_CALL
+        return when (val target = ref.reference?.resolve()) {
+            is MatlabFunctionDeclaration -> METHOD_CALL
+            is MatlabProperty -> if (isConstantProperty(target)) CONSTANT else FIELD
+            is MatlabEnumItem -> ENUM_MEMBER
+            else -> FIELD
         }
     }
 
-    private fun isConstructor(function: MatlabFunctionDeclaration): Boolean {
-        val cls = PsiTreeUtil.getParentOfType(function, MatlabClassDeclaration::class.java) ?: return false
-        return (function as PsiNamedElement).name == (cls as PsiNamedElement).name
-    }
-
-    /** Top-level function of a file in an @ClassName folder (old-style class method). */
-    private fun isInClassFolder(function: MatlabFunctionDeclaration): Boolean {
-        if (function.parent !is MatlabFile) return false
-        val dir = function.containingFile.originalFile.virtualFile?.parent?.name ?: return false
-        if (!dir.startsWith("@")) return false
-        // The constructor (same name as the folder) takes inputs, not the object.
-        return (function as PsiNamedElement).name != dir.substring(1)
+    private fun isConstantProperty(property: MatlabProperty): Boolean {
+        val block = PsiTreeUtil.getParentOfType(property, MatlabPropertiesBlock::class.java) ?: return false
+        return hasAttribute(block.attributes, "Constant")
     }
 }

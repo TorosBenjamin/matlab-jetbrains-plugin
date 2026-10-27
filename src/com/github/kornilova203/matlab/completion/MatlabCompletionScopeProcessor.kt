@@ -1,7 +1,9 @@
 package com.github.kornilova203.matlab.completion
 
 import com.github.kornilova203.matlab.psi.MatlabDeclaration
+import com.github.kornilova203.matlab.psi.MatlabEnumItem
 import com.github.kornilova203.matlab.psi.MatlabFunctionDeclaration
+import com.github.kornilova203.matlab.psi.MatlabProperty
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -18,7 +20,12 @@ class MatlabCompletionScopeProcessor(private val result: CompletionResultSet) : 
 
     override fun execute(decl: PsiElement, state: ResolveState): Boolean {
         if (decl !is MatlabDeclaration) return true
-        val element = if (decl is MatlabFunctionDeclaration) createFunctionLookupElement(decl) else LookupElementBuilder.create(decl)
+        val element = when (decl) {
+            is MatlabFunctionDeclaration -> createFunctionLookupElement(decl)
+            is MatlabProperty -> LookupElementBuilder.create(decl).withIcon(AllIcons.Nodes.Property)
+            is MatlabEnumItem -> LookupElementBuilder.create(decl).withIcon(AllIcons.Nodes.Enum)
+            else -> LookupElementBuilder.create(decl)
+        }
         if (element != null) result.addElement(element)
         return true
     }
