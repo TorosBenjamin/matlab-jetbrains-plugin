@@ -80,6 +80,7 @@
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterInStringLiteralHandler"/>
         <lang.documentationProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabDocumentationProvider"/>
         <elementDescriptionProvider implementation="com.github.kornilova203.matlab.MatlabElementDescriptionProvider"/>
+        <renamePsiElementProcessor implementation="com.github.kornilova203.matlab.refactoring.MatlabRenameProcessor"/>
         <inlineActionHandler implementation="com.github.kornilova203.matlab.refactoring.MatlabInlineVariableHandler"/>
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterHandler"/>
