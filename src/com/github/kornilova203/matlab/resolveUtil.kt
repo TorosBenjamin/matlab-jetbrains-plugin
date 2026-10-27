@@ -25,13 +25,24 @@ fun PsiElement.forEachSiblingForward(processor: (PsiElement) -> Boolean): Boolea
     return true
 }
 
+/** True if no function boundary lies between this and [parent]. Nested functions don't count: they share variables. */
 fun PsiElement.inCurrentFunction(parent: PsiElement): Boolean {
     var el: PsiElement = this
     while (el != parent) {
-        if (el is MatlabFunctionDeclaration) return false
+        if (el is MatlabFunctionDeclaration && !isNestedFunction(el)) return false
         el = el.parent
     }
     return true
+}
+
+/**
+ * A function defined inside another function's body shares that function's variables.
+ * In files whose functions don't end with `end`, the parser puts each following function inside the
+ * previous one, but those are separate local functions, so the outer one must be closed by `end`.
+ */
+fun isNestedFunction(function: MatlabFunctionDeclaration): Boolean {
+    val outer = (function.parent as? MatlabBlock)?.parent as? MatlabFunctionDeclaration ?: return false
+    return outer.lastChild?.node?.elementType == MatlabTypes.END
 }
 
 fun PsiElement.findDeclaration(processor: PsiScopeProcessor, state: ResolveState, inCurrentScope: Boolean, declarationIsBeforeUsage: Boolean = true): Boolean {
@@ -55,7 +66,9 @@ fun processDeclarations(parent: PsiElement, processor: PsiScopeProcessor, state:
     val res = lastParent?.forEachSiblingBackwards { it.findDeclaration(processor, state, inCurrentScope) }
     if (res == false) return false
 
-    return lastParent?.forEachSiblingForward { it.findDeclaration(processor, state, inCurrentScope, false) } ?: true
+    // A nested function sees the outer function's variables even if they're assigned after its definition.
+    val seesLaterDeclarations = lastParent is MatlabFunctionDeclaration && isNestedFunction(lastParent)
+    return lastParent?.forEachSiblingForward { it.findDeclaration(processor, state, inCurrentScope, seesLaterDeclarations) } ?: true
 }
 
 fun processDeclarationsInClass(processor: PsiScopeProcessor, state: ResolveState, type: MatlabTypeClass): Boolean {

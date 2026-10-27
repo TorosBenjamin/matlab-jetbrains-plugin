@@ -22,6 +22,8 @@ class UnusedVariableTest : MatlabInspectionTest() {
     fun testSameRetValueAndParameter() = doTest(false)
     fun testSameRetValueAndParameterUnused() = doTest()
     fun testFor() = doTest(false)
+    fun testNestedFunction() = doTest(false)
+    fun testLocalFunctionsWithoutEnd() = doTest(false)
 
     private fun doTest(checkFix: Boolean = true) {
         super.doTest(checkFix, MatlabUnusedVariableInspection::class.java)
