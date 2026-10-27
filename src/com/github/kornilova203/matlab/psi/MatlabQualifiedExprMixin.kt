@@ -21,10 +21,7 @@ abstract class MatlabQualifiedExprMixin(node: ASTNode) : MatlabBinaryExprImpl(no
         if (element !is MatlabTypedExpr) {
             return true
         }
-        val type = element.getType()
-        if (type !is MatlabTypeClass) {
-            return true
-        }
+        val type = com.github.kornilova203.matlab.psi.types.memberOwnerClass(element.getType()) ?: return true
         return processDeclarationsInClass(processor, state, type)
     }
 

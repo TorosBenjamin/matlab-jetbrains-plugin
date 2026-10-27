@@ -24,7 +24,10 @@ abstract class MatlabRetValueMixin(node: ASTNode) : MatlabASTWrapperPsiElement(n
     override fun getType(): MatlabType {
         // Constructor output (obj in `function obj = Shape(...)`) or `obj = setX(obj, v)`.
         val cl = objectClassOf(this) ?: isEqualFirstParameter()
-        return if (cl != null) MatlabTypeClass(cl) else MatlabTypeUnknown()
+        if (cl != null) return MatlabTypeClass(cl)
+        // Inside the function, the output holds what the function returns: obj = inst; obj.x
+        val function = parent?.parent as? MatlabFunctionDeclaration ?: return MatlabTypeUnknown()
+        return com.github.kornilova203.matlab.psi.types.inferReturnType(function)
     }
 
     private fun isEqualFirstParameter(): MatlabClassDeclaration? {

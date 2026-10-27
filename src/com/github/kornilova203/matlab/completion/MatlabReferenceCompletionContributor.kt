@@ -5,7 +5,7 @@ import com.github.kornilova203.matlab.psi.MatlabClassDeclaration
 import com.github.kornilova203.matlab.psi.MatlabQualifiedExpr
 import com.github.kornilova203.matlab.psi.MatlabRefExpr
 import com.github.kornilova203.matlab.psi.MatlabTypedExpr
-import com.github.kornilova203.matlab.psi.types.MatlabTypeClass
+import com.github.kornilova203.matlab.psi.types.memberOwnerClass
 import com.github.kornilova203.matlab.processDeclarationsInClass
 import com.github.kornilova203.matlab.psi.MatlabDeclaration
 import com.github.kornilova203.matlab.psi.MatlabFunctionDeclaration
@@ -48,8 +48,8 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
         val ref = position.parent as? MatlabRefExpr ?: return false
         val qualified = ref.parent as? MatlabQualifiedExpr ?: return false
         if (qualified.lastChild != ref) return false
-        val type = (qualified.firstChild as? MatlabTypedExpr)?.getType()
-        if (type is MatlabTypeClass) processDeclarationsInClass(processor, ResolveState.initial(), type)
+        val type = (qualified.firstChild as? MatlabTypedExpr)?.getType()?.let(::memberOwnerClass)
+        if (type != null) processDeclarationsInClass(processor, ResolveState.initial(), type)
         return true
     }
 

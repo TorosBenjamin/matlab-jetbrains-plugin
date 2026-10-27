@@ -12,7 +12,7 @@ class MatlabTypeFunction(val decl: MatlabStubbedFunctionDeclaration) : MatlabTyp
     fun getDeclaration(): MatlabFunctionDeclaration = decl
     fun getReturnType(): MatlabType {
         val cl = decl.isConstructor() ?: isClassReturn()
-        return if (cl != null) MatlabTypeClass(cl) else MatlabTypeUnknown()
+        return if (cl != null) MatlabTypeClass(cl) else inferReturnType(decl)
     }
 
     private fun isClassReturn(): MatlabClassDeclaration? {
