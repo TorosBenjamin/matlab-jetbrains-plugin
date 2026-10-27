@@ -26,7 +26,8 @@ class MatlabUnreachableCodeInspection : LocalInspectionTool() {
                         }
                     }
                     for (element in unreachable) {
-                        if (element == null) {
+                        // An empty block (e.g. in `while false, end`) has nothing to highlight.
+                        if (element == null || element.textLength == 0) {
                             continue
                         }
                         if (!generateSequence(element.parent) { if (it is PsiFile) null else it.parent }.any {unreachable.contains(it)}) {

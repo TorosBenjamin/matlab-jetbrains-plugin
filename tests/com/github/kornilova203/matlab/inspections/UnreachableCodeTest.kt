@@ -7,6 +7,7 @@ class UnreachableCodeTest : MatlabInspectionTest() {
     fun testIf() = doTest()
     fun testLoop() = doTest()
     fun testReturn() = doTest()
+    fun testEmptyBlock() = doTest()
 
     private fun doTest() {
         super.doTest(false, MatlabUnreachableCodeInspection::class.java)
