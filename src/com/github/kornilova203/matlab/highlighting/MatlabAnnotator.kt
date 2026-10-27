@@ -1,6 +1,7 @@
 package com.github.kornilova203.matlab.highlighting
 
 import com.github.kornilova203.matlab.MatlabElementTypes.*
+import com.github.kornilova203.matlab.MatlabLibraryDocs
 import com.github.kornilova203.matlab.psi.*
 import com.github.kornilova203.matlab.psi.MatlabTypes.*
 import com.intellij.lang.annotation.AnnotationHolder
@@ -43,6 +44,8 @@ class MatlabAnnotator : Annotator {
         val ATTRIBUTE_VALUE = createTextAttributesKey("MATLAB.ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.KEYWORD)
         val EVENT = createTextAttributesKey("MATLAB.EVENT", DefaultLanguageHighlighterColors.STATIC_FIELD)
         val ENUM_MEMBER = createTextAttributesKey("MATLAB.ENUM_MEMBER", DefaultLanguageHighlighterColors.CONSTANT)
+        /** `disp(x)`, `helper(3)`, `hold on`, `@add_numbers`, `pi` */
+        val FUNCTION_CALL = createTextAttributesKey("MATLAB.FUNCTION_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL)
 
         private val ATTRIBUTE_VALUES = setOf("public", "private", "protected", "immutable", "true", "false")
     }
@@ -85,7 +88,12 @@ class MatlabAnnotator : Annotator {
                 return when (val target = parent.reference?.resolve()) {
                     is MatlabParameter -> if (isObjectReference(target)) OBJECT_REFERENCE else PARAMETER
                     is MatlabRetValue -> if (isObjectReference(target)) OBJECT_REFERENCE else ID
-                    else -> ID
+                    // Project function, or a class name used as a constructor: Shape(1, 2)
+                    is MatlabFunctionDeclaration, is MatlabClassDeclaration -> FUNCTION_CALL
+                    // A variable: x(1) is indexing, not a call.
+                    is MatlabDeclaration -> ID
+                    // Not defined in the project: a built-in or toolbox function if it's used like one.
+                    else -> if (isUsedAsFunction(parent) || MatlabLibraryDocs.isKnown(identifier.text)) FUNCTION_CALL else ID
                 }
             }
         }
@@ -121,6 +129,13 @@ class MatlabAnnotator : Annotator {
             is MatlabEnumItem -> ENUM_MEMBER
             else -> FIELD
         }
+    }
+
+    /** `name(...)`, `name args` (command syntax) or `@name`. */
+    private fun isUsedAsFunction(ref: MatlabRefExpr): Boolean = when (val parent = ref.parent) {
+        is MatlabFunctionExpr -> parent.firstChild == ref
+        is MatlabCommandStatement, is MatlabFunctionRefExpr -> true
+        else -> false
     }
 
     private fun isConstantProperty(property: MatlabProperty): Boolean {

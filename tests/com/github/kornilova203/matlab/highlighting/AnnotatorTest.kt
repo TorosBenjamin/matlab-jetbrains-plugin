@@ -24,7 +24,7 @@ class AnnotatorTest : BasePlatformTestCase() {
     )
 
     fun testCommandWordIsNotIdentifier() = assertEquals(
-        listOf("hold", "x"),
+        listOf("x"),
         coloredWith("hold on\nx = 1;\n", MatlabAnnotator.ID)
     )
 
@@ -120,5 +120,34 @@ class AnnotatorTest : BasePlatformTestCase() {
     fun testEndAsIndexIsNotIdentifier() = assertEquals(
         emptyList<String>(),
         coloredWith("z = 1:10;\nlast = z(end);\n", MatlabAnnotator.ID).filter { it == "end" }
+    )
+
+    private val calls = """
+        x = zeros(3);
+        y = x(1);
+        assert(y == x(2));
+        t = pi;
+        fh = @helper;
+        hold on
+        r = helper(3);
+        q = undefinedThing(1);
+        s = Shape(1, 2);
+        function out = helper(n)
+            out = n(1);
+        end
+        """.trimIndent()
+
+    fun testFunctionCalls() {
+        myFixture.addFileToProject("Shape.m", "classdef Shape\nend\n")
+        assertEquals(
+            listOf("zeros", "assert", "pi", "helper", "hold", "helper", "undefinedThing", "Shape"),
+            coloredWith(calls, MatlabAnnotator.FUNCTION_CALL)
+        )
+    }
+
+    /** Indexing into a variable or parameter looks like a call but isn't one. */
+    fun testIndexingIsNotACall() = assertEquals(
+        listOf("x", "y", "x", "y", "x", "t", "fh", "r", "q", "s", "out", "out"),
+        coloredWith(calls, MatlabAnnotator.ID)
     )
 }

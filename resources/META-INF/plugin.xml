@@ -21,6 +21,7 @@
         <li>Fixed "PSI and index do not match" errors after upgrading (stubs are rebuilt)</li>
         <li>Colors for properties, constants, types, attributes, events; obj.method without () recognized; obj. completes class members</li>
         <li>Nested functions see the outer function's variables (no false "unused variable")</li>
+        <li>Function call color (disp(x), helper(3), hold on, @f); indexing a variable keeps the variable color</li>
     </ol>
     ]]>
     </change-notes>

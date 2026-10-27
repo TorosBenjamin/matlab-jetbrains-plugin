@@ -23,6 +23,7 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Parameter", MatlabAnnotator.PARAMETER),
         AttributesDescriptor("Object reference (obj in methods)", MatlabAnnotator.OBJECT_REFERENCE),
         AttributesDescriptor("Field (obj.Width)", MatlabAnnotator.FIELD),
+        AttributesDescriptor("Function call", MatlabAnnotator.FUNCTION_CALL),
         AttributesDescriptor("Method call (obj.move())", MatlabAnnotator.METHOD_CALL),
         AttributesDescriptor("Constant property", MatlabAnnotator.CONSTANT),
         AttributesDescriptor("Type (double, superclass)", MatlabAnnotator.TYPE),
@@ -47,6 +48,7 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         "obj" to MatlabAnnotator.OBJECT_REFERENCE,
         "field" to MatlabAnnotator.FIELD,
         "call" to MatlabAnnotator.METHOD_CALL,
+        "fcall" to MatlabAnnotator.FUNCTION_CALL,
         "const" to MatlabAnnotator.CONSTANT,
         "type" to MatlabAnnotator.TYPE,
         "attr" to MatlabAnnotator.ATTRIBUTE,
@@ -86,10 +88,10 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         end
 
         <id>sq</id> = <at>@(</at><id>x</id><at>)</at> <id>x</id>.^2;
-        <id>msg</id> = sprintf('total: %d\n', 42);
+        <id>msg</id> = <fcall>sprintf</fcall>('total: %d\n', 42);
         <id>s</id> = "a string";
         <id>m</id> = [1 2; 3 4]';
-        disp(<id>msg</id>)  % trailing comment
-        hold <cmd>on</cmd>
+        <fcall>disp</fcall>(<id>msg</id>)  % trailing comment
+        <fcall>hold</fcall> <cmd>on</cmd>
     """.trimIndent()
 }
