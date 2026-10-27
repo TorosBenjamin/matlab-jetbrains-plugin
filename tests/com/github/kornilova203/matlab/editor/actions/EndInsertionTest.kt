@@ -38,4 +38,14 @@ class EndInsertionTest : BasePlatformTestCase() {
         enter("y = x(end);\nif y<caret>"))
 
     fun testNotAtEndOfLine() = assertFalse(enter("if x<caret> y").contains("end"))
+
+    fun testCanBeTurnedOff() {
+        val settings = com.github.kornilova203.matlab.settings.MatlabSettings.getInstance()
+        settings.insertEnd = false
+        try {
+            assertEquals("if x\n", enter("if x<caret>"))
+        } finally {
+            settings.insertEnd = true
+        }
+    }
 }

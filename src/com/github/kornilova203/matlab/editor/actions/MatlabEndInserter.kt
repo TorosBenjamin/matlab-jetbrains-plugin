@@ -5,6 +5,7 @@ import com.github.kornilova203.matlab.psi.MatlabClassDeclaration
 import com.github.kornilova203.matlab.psi.MatlabFile
 import com.github.kornilova203.matlab.psi.MatlabFunctionDeclaration
 import com.github.kornilova203.matlab.psi.MatlabTypes
+import com.github.kornilova203.matlab.settings.MatlabSettings
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.openapi.actionSystem.DataContext
@@ -22,11 +23,6 @@ import com.intellij.psi.util.elementType
  * inside code that's already closed doesn't add a stray `end`.
  */
 class MatlabEndInserter : EnterHandlerDelegateAdapter() {
-    companion object {
-        /** Lets tests that type whole files (including their own `end`s) turn this off. */
-        @JvmStatic var enabled = true
-    }
-
     private val keywordOpeners = setOf(
         MatlabTypes.IF, MatlabTypes.FOR, MatlabTypes.WHILE, MatlabTypes.SWITCH, MatlabTypes.TRY,
         MatlabTypes.PARFOR, MatlabTypes.SPMD, MatlabTypes.CLASSDEF, MatlabTypes.FUNCTION,
@@ -35,7 +31,7 @@ class MatlabEndInserter : EnterHandlerDelegateAdapter() {
     )
 
     override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): EnterHandlerDelegate.Result {
-        if (file !is MatlabFile || !enabled) return EnterHandlerDelegate.Result.Continue
+        if (file !is MatlabFile || !MatlabSettings.getInstance().insertEnd) return EnterHandlerDelegate.Result.Continue
         val document = editor.document
         val caret = editor.caretModel.offset
         val line = document.getLineNumber(caret)

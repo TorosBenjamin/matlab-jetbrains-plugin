@@ -15,11 +15,11 @@ class LineIndentTest : BasePlatformTestCase() {
     // These tests type whole files, including the `end`s.
     override fun setUp() {
         super.setUp()
-        com.github.kornilova203.matlab.editor.actions.MatlabEndInserter.enabled = false
+        com.github.kornilova203.matlab.settings.MatlabSettings.getInstance().insertEnd = false
     }
 
     override fun tearDown() {
-        com.github.kornilova203.matlab.editor.actions.MatlabEndInserter.enabled = true
+        com.github.kornilova203.matlab.settings.MatlabSettings.getInstance().insertEnd = true
         super.tearDown()
     }
 
