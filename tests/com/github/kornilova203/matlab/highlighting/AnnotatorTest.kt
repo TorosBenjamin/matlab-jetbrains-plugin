@@ -27,4 +27,40 @@ class AnnotatorTest : BasePlatformTestCase() {
         listOf("hold", "x"),
         coloredWith("hold on\nx = 1;\n", MatlabAnnotator.ID)
     )
+
+    private val shape = """
+        classdef Shape < handle
+            properties
+                Width = 1
+            end
+            methods
+                function obj = Shape(w, h)
+                    obj.Width = w;
+                end
+                function a = area(obj, scale)
+                    a = obj.Width * scale;
+                    obj.resize(2);
+                end
+            end
+            methods (Static)
+                function s = unit(n)
+                    s = Shape(n, n);
+                end
+            end
+        end
+        """.trimIndent()
+
+    fun testFields() = assertEquals(listOf("Width", "Width"), coloredWith(shape, MatlabAnnotator.FIELD))
+
+    fun testMethodCalls() = assertEquals(listOf("resize"), coloredWith(shape, MatlabAnnotator.METHOD_CALL))
+
+    fun testParameters() = assertEquals(
+        listOf("w", "h", "w", "scale", "scale", "n", "n", "n"),
+        coloredWith(shape, MatlabAnnotator.PARAMETER)
+    )
+
+    fun testObjectReference() = assertEquals(
+        listOf("obj", "obj", "obj", "obj", "obj"),
+        coloredWith(shape, MatlabAnnotator.OBJECT_REFERENCE)
+    )
 }

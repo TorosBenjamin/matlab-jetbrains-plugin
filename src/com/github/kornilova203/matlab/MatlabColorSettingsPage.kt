@@ -20,6 +20,10 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Number", MatlabSyntaxHighlighter.NUMBER),
         AttributesDescriptor("Semicolon", MatlabSyntaxHighlighter.SEMICOLON),
         AttributesDescriptor("Identifier", MatlabAnnotator.ID),
+        AttributesDescriptor("Parameter", MatlabAnnotator.PARAMETER),
+        AttributesDescriptor("Object reference (obj in methods)", MatlabAnnotator.OBJECT_REFERENCE),
+        AttributesDescriptor("Field (obj.Width)", MatlabAnnotator.FIELD),
+        AttributesDescriptor("Method call (obj.move())", MatlabAnnotator.METHOD_CALL),
         AttributesDescriptor("Command argument (hold on)", MatlabAnnotator.COMMAND_ARGUMENT),
         AttributesDescriptor("Function declaration", MatlabAnnotator.FUNCTION_DECLARATION),
         AttributesDescriptor("Class declaration", MatlabAnnotator.CLASS_DECLARATION),
@@ -33,6 +37,10 @@ class MatlabColorSettingsPage : ColorSettingsPage {
         "blk" to MatlabAnnotator.KEYWORD,
         "at" to MatlabAnnotator.LAMBDA_PARENTH,
         "id" to MatlabAnnotator.ID,
+        "param" to MatlabAnnotator.PARAMETER,
+        "obj" to MatlabAnnotator.OBJECT_REFERENCE,
+        "field" to MatlabAnnotator.FIELD,
+        "call" to MatlabAnnotator.METHOD_CALL,
         "cmd" to MatlabAnnotator.COMMAND_ARGUMENT,
     )
 
@@ -50,11 +58,12 @@ class MatlabColorSettingsPage : ColorSettingsPage {
                 <id>Count</id> = 0
             end
             <blk>methods</blk>
-                function <fn>increment</fn>(<id>obj</id>, <id>step</id>)
+                function <fn>increment</fn>(<obj>obj</obj>, <param>step</param>)
                     if nargin < 2
-                        <id>step</id> = 1;
+                        <param>step</param> = 1;
                     end
-                    <id>obj</id>.<id>Count</id> = <id>obj</id>.<id>Count</id> + <id>step</id>;
+                    <obj>obj</obj>.<field>Count</field> = <obj>obj</obj>.<field>Count</field> + <param>step</param>;
+                    <obj>obj</obj>.<call>notify</call>('Changed');
                 end
             end
         end

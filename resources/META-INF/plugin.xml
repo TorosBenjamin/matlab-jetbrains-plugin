@@ -16,6 +16,7 @@
         <li>Fixed possible deadlock in code completion</li>
         <li>Parser: command syntax, arguments blocks, persistent, package-qualified class names, superclass calls</li>
         <li>Structure view, MATLAB color settings page</li>
+        <li>Colors for fields, method calls, parameters and the object variable (obj)</li>
     </ol>
     ]]>
     </change-notes>
