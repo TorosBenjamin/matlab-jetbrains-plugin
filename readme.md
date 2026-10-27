@@ -19,16 +19,15 @@ https://plugins.jetbrains.com/plugin/10941-matlab-support
 ## Running matlab files from IDE
  1. Right click on .m file in files tree.
  2. Choose **Run 'helloWorld.m'**.
- 3. If you do it for the first time you'll see an error message telling you that interpreter is not specified.
-    1. To fix it open **Run | Edit configuration...** choose created configuration and specify path to `matlab` executable.  
-    Tip: you can specify path to any other program that runs .m files like [Octave].
-    
- 4. You can save generated run configuration so it will not be removed.
- To do it open **Run | Edit configuration...** choose the configuration and click **Save** icon.
+
+MATLAB is found automatically (on `PATH`, or in the standard install folders such as
+`/usr/local/MATLAB/R20xx`). To choose an installation, set its executable in
+**Settings | Languages & Frameworks | MATLAB**; a run configuration can override it
+(**Run | Edit Configurations...** > Interpreter path). [Octave] works too.
 
 The script is run with `matlab -batch "run('file.m')"` (or `octave --eval` when the interpreter
 path contains `octave`). The process stays alive while figure windows are open.
- 
+
 ## Development
 
 For easier development install [Grammar-Kit](https://plugins.jetbrains.com/plugin/6606-grammar-kit) plugin.

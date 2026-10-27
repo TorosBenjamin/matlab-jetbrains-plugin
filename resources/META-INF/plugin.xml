@@ -26,6 +26,7 @@
         <li>Completion depends on position: nothing for new names, attribute names/values, types, validators</li>
         <li>Return types: singletons (getInstance), arguments (Output) blocks and factory functions; members of the result resolve and complete</li>
         <li>Unused local/nested functions and private methods; "N usages" above functions, classes and properties</li>
+        <li>MATLAB executable setting with auto-detection; run configurations use it unless they set their own</li>
     </ol>
     ]]>
     </change-notes>

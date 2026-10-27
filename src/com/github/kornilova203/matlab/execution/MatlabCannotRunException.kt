@@ -6,7 +6,8 @@ import com.intellij.execution.ExecutionException
 class MatlabCannotRunException(message: String) : ExecutionException(message) {
     companion object {
         fun interpreterNotSetUp(): MatlabCannotRunException {
-            return MatlabCannotRunException("Matlab interpreter is not specified.")
+            return MatlabCannotRunException(
+                "MATLAB was not found. Set its path in Settings | Languages & Frameworks | MATLAB or in this run configuration.")
         }
 
         fun fileNotSetUp(): MatlabCannotRunException {

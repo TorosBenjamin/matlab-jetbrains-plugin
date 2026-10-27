@@ -4,7 +4,7 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.ide.util.PropertiesComponent
+import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizerUtil
@@ -17,7 +17,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
 
     private var workingDir: String? = null
     private var programParams: String? = null
-    private var interpreterPath: String? = PropertiesComponent.getInstance(project).getValue(MATLAB_INTERPRETER) // null or non empty string
+    private var interpreterPath: String? = null // overrides Settings | Languages & Frameworks | MATLAB; null or non empty
     private var filePath: String? = null // null or non empty string
     private var interpreterOptions: String? = null // null or non empty string
 
@@ -28,14 +28,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
     override fun getInterpreterPath(): String? = interpreterPath
 
     override fun setInterpreterPath(path: String) {
-        if (path.isBlank()) {
-            interpreterPath = null
-        } else {
-            interpreterPath = path
-            /* update project level interpreter */
-            PropertiesComponent.getInstance(project).setValue(MATLAB_INTERPRETER, path)
-            PropertiesComponent.getInstance().setValue(MATLAB_INTERPRETER, path)
-        }
+        interpreterPath = path.ifBlank { null }
     }
 
     override fun getFilePath(): String? = filePath
@@ -53,7 +46,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> = MatlabSettingsEditor()
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-        if (interpreterPath == null) {
+        if (MatlabInstallations.resolveInterpreter(interpreterPath) == null) {
             throw MatlabCannotRunException.interpreterNotSetUp()
         }
         if (filePath == null) {

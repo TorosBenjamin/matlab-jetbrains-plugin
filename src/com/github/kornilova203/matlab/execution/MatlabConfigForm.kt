@@ -29,6 +29,8 @@ class MatlabConfigForm : CommonProgramParametersPanel() {
     override fun addComponents() {
         filePathField = fileField("Choose MATLAB Script")
         interpreterPathField = fileField("Choose MATLAB or Octave Executable")
+        (interpreterPathField.textField as? com.intellij.ui.components.JBTextField)?.emptyText
+            ?.setText("Default from Settings | Languages & Frameworks | MATLAB")
         interpreterOptionsComponent = labeled(RawCommandLineEditor(), "Interpreter options:")
 
         add(labeled(filePathField, "File:"))

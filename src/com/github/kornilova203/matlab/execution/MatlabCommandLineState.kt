@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.util.execution.ParametersListUtil
+import com.github.kornilova203.matlab.settings.MatlabInstallations
 import java.io.File
 
 
@@ -23,7 +24,7 @@ class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguratio
 
     companion object {
         internal fun createCommandLine(workingDir: String, runConfiguration: MatlabRunConfiguration): GeneralCommandLine {
-            val interpreter = runConfiguration.getInterpreterPath()!!
+            val interpreter = MatlabInstallations.resolveInterpreter(runConfiguration.getInterpreterPath())!!
             val cmd = GeneralCommandLine().withExePath(interpreter)
 
             runConfiguration.getInterpreterOptions()?.let { cmd.addParameters(ParametersListUtil.parse(it)) }
