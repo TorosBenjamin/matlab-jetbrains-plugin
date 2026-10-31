@@ -90,7 +90,11 @@ tasks.test {
     // Optional: folder of MATLAB code for CorpusParsingTest (-PmatlabCorpus=/path).
     systemProperty("matlab.corpus", findProperty("matlabCorpus")?.toString() ?: "")
     systemProperty("matlab.corpus.report", layout.buildDirectory.file("corpus-report.txt").get().asFile.path)
-    testLogging { showStandardStreams = findProperty("matlabCorpus") != null }
+    testLogging {
+        showStandardStreams = findProperty("matlabCorpus") != null
+        // Show expected and actual text of failed comparisons in the build output (and CI logs)
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 // Regenerate lexers and parser into gen/ (committed, so normal builds don't need this):
