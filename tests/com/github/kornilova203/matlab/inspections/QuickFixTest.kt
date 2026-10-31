@@ -86,7 +86,9 @@ class QuickFixTest : BasePlatformTestCase() {
         myFixture.launchAction(myFixture.findSingleIntention("Create function 'scaleBy' in scaleBy.m"))
         val created = myFixture.findFileInTempDir("scaleBy.m")
         assertNotNull(created)
-        assertEquals("function y = scaleBy(x, arg2)\n    \nend\n", String(created.contentsToByteArray()))
+        // The document's text: on disk, new files get the system's line separator (\r\n on Windows)
+        assertEquals("function y = scaleBy(x, arg2)\n    \nend\n",
+            com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getDocument(created)!!.text)
     }
 
     fun testCreateLocalFunction() {
