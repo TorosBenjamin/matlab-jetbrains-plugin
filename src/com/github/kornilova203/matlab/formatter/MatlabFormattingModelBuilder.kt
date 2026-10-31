@@ -30,8 +30,11 @@ class MatlabFormattingModelBuilder : FormattingModelBuilder {
         val settings = formattingContext.codeStyleSettings
         val document = PsiDocumentManager.getInstance(file.project).getDocument(file)
         val documentManager = PsiDocumentManager.getInstance(file.project)
-        if (document == null || documentManager.isDocumentBlockedByPsi(document) || !documentManager.isCommitted(document)) {
-            // Code built in memory, or tree changes not yet in the document (during refactorings): leave it alone
+        // Only Code | Reformat Code (and reformat on save). Indenting after Enter and after refactorings is left
+        // to MatlabLineIndentProvider and the editor, as before there was a formatter.
+        if (formattingContext.formattingMode != FormattingMode.REFORMAT ||
+                document == null || documentManager.isDocumentBlockedByPsi(document) || !documentManager.isCommitted(document)) {
+            // Also code built in memory, or tree changes not yet in the document: leave it alone
             return FormattingModelProvider.createFormattingModelForPsiFile(file, MatlabUnformattedBlock(file.node), settings)
         }
         val root = MatlabBlock(file.node, Indent.getNoneIndent(), Spacings(settings))
