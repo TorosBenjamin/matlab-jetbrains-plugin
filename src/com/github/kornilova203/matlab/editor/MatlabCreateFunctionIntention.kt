@@ -118,22 +118,23 @@ class MatlabCreateFunctionFileIntention : MatlabCreateFunctionIntention() {
 class MatlabCreateLocalFunctionIntention : MatlabCreateFunctionIntention() {
     override fun text(name: String) = "Create local function '$name'"
 
+    // Only changes the current file, so it runs in the platform's write action (which also checks the file is writable)
+    override fun startInWriteAction(): Boolean = true
+
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val call = unresolvedCall(element) ?: return
         editor ?: return
         val document = editor.document
-        WriteCommandAction.writeCommandAction(project).withName(text).run<RuntimeException> {
-            val text = document.charsSequence
-            val separator = when {
-                text.isEmpty() -> ""
-                text.endsWith("\n\n") -> ""
-                text.endsWith("\n") -> "\n"
-                else -> "\n\n"
-            }
-            val start = document.textLength + separator.length
-            document.insertString(document.textLength, separator + call.code())
-            PsiDocumentManager.getInstance(project).commitDocument(document)
-            editor.caretModel.moveToOffset(document.getLineEndOffset(document.getLineNumber(start) + 1))
+        val text = document.charsSequence
+        val separator = when {
+            text.isEmpty() -> ""
+            text.endsWith("\n\n") -> ""
+            text.endsWith("\n") -> "\n"
+            else -> "\n\n"
         }
+        val start = document.textLength + separator.length
+        document.insertString(document.textLength, separator + call.code())
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        editor.caretModel.moveToOffset(document.getLineEndOffset(document.getLineNumber(start) + 1))
     }
 }
