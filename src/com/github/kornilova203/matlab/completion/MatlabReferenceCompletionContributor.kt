@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
+import com.github.kornilova203.matlab.MatlabLibraryDocs
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.PsiTreeUtil
@@ -69,22 +71,28 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
         val imports = MatlabPackages.imports(position)
         for (pkg in imports.packages) addPackageMembers(project, pkg, result)
         val stubs = mutableListOf<LookupElement>()
-        resolveIndex(position, MatlabClassDeclarationIndex.KEY, MatlabClassDeclaration::class.java, stubs) { declaration ->
-            return@resolveIndex LookupElementBuilder.create(declaration).withIcon(AllIcons.Nodes.Class)
+        // The project's files, then the MATLAB path. Names already offered are skipped: the project's own
+        // function shadows one on the path, and MATLAB's functions come with the built-in function list.
+        val seen = HashSet<String>()
+        for ((i, scope) in listOf(GlobalSearchScope.projectScope(project), ProjectScope.getLibrariesScope(project)).withIndex()) {
+            val skip = if (i == 0) emptySet() else seen + MatlabLibraryDocs.functionNames
+            resolveIndex(position, scope, skip, seen, MatlabClassDeclarationIndex.KEY, MatlabClassDeclaration::class.java, stubs) { declaration ->
+                return@resolveIndex LookupElementBuilder.create(declaration).withIcon(AllIcons.Nodes.Class)
+            }
+            resolveIndex(position, scope, skip, seen, MatlabFunctionDeclarationIndex.KEY, MatlabFunctionDeclaration::class.java, stubs) { declaration -> createFunctionLookupElement(declaration) }
         }
-        resolveIndex(position, MatlabFunctionDeclarationIndex.KEY, MatlabFunctionDeclaration::class.java, stubs) { declaration -> createFunctionLookupElement(declaration) }
         result.addAllElements(stubs)
     }
 
-    private fun <Psi : PsiElement?> resolveIndex(position: PsiElement, indexKey: StubIndexKey<String, Psi>, requiredClass: Class<Psi>, stubs: MutableList<LookupElement>, create: (MatlabDeclaration) -> LookupElement?) {
+    private fun <Psi : PsiElement?> resolveIndex(position: PsiElement, scope: GlobalSearchScope, skip: Set<String>, seen: MutableSet<String>,
+                                                 indexKey: StubIndexKey<String, Psi>, requiredClass: Class<Psi>, stubs: MutableList<LookupElement>, create: (MatlabDeclaration) -> LookupElement?) {
         val project = position.project
         // Collect keys first: querying the index while iterating its keys can deadlock.
-        val scope = GlobalSearchScope.projectScope(project)
-        val keys = StubIndex.getInstance().getAllKeys(indexKey, project)
+        val keys = StubIndex.getInstance().getAllKeys(indexKey, project).filter { it !in skip }
         for (key in keys) {
             StubIndex.getInstance().processElements(indexKey, key, project, scope, requiredClass) { psiElement ->
                 if (psiElement is MatlabDeclaration && psiElement.name + ".m" == psiElement.containingFile.name &&
-                        MatlabPackages.isVisibleByPlainName(psiElement, position)) {
+                        MatlabPackages.isVisibleByPlainName(psiElement, position) && seen.add(key)) {
                     val element = create(psiElement)
                     if (element != null) {
                         stubs.add(element)

@@ -45,8 +45,9 @@
                   implementationClass="com.github.kornilova203.matlab.MatlabFileType"/>
         <lang.parserDefinition language="Matlab"
                                implementationClass="com.github.kornilova203.matlab.MatlabParserDefinition"/>
-        <applicationConfigurable parentId="language" id="matlab.settings" displayName="MATLAB"
-                                 instance="com.github.kornilova203.matlab.settings.MatlabSettingsConfigurable"/>
+        <projectConfigurable parentId="language" id="matlab.settings" displayName="MATLAB"
+                             instance="com.github.kornilova203.matlab.settings.MatlabSettingsConfigurable"/>
+        <additionalLibraryRootsProvider implementation="com.github.kornilova203.matlab.path.MatlabPathLibraryProvider"/>
         <gotoClassContributor implementation="com.github.kornilova203.matlab.navigation.MatlabGotoClassContributor"/>
         <gotoSymbolContributor implementation="com.github.kornilova203.matlab.navigation.MatlabGotoSymbolContributor"/>
         <itemPresentationProvider forClass="com.github.kornilova203.matlab.psi.impl.MatlabFunctionDeclarationImpl"

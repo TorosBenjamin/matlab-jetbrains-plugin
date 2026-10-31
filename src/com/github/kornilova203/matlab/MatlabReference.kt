@@ -8,6 +8,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.PsiTreeUtil
@@ -40,13 +41,17 @@ class MatlabReference(myElement: MatlabRefExpr) : PsiPolyVariantReferenceBase<Ma
         val processor = MatlabResolvingScopeProcessor(this)
         val containingFile = myElement.containingFile
         PsiTreeUtil.treeWalkUp(processor, myElement, containingFile, ResolveState.initial())
-        resolveIndex(processor, MatlabFunctionDeclarationIndex.KEY, MatlabFunctionDeclaration::class.java)
-        resolveIndex(processor, MatlabClassDeclarationIndex.KEY, MatlabClassDeclaration::class.java)
+        // The project's own files first, then the MATLAB path (only the first declaration found is used)
+        val project = myElement.project
+        for (scope in listOf(GlobalSearchScope.projectScope(project), ProjectScope.getLibrariesScope(project))) {
+            resolveIndex(processor, MatlabFunctionDeclarationIndex.KEY, MatlabFunctionDeclaration::class.java, scope)
+            resolveIndex(processor, MatlabClassDeclarationIndex.KEY, MatlabClassDeclaration::class.java, scope)
+        }
         if (processor.declaration !is MatlabGlobalVariableDeclaration && processor.declaration !is MatlabAssignExpr) {
             return if (processor.declaration != null) arrayOf(PsiElementResolveResult(processor.declaration!!)) else emptyArray()
         }
         var isGlobalVariable = false
-        StubIndex.getInstance().processElements(MatlabGlobalVariableIndex.KEY, myElement.text, myElement.project, GlobalSearchScope.projectScope(myElement.project), MatlabGlobalVariableDeclaration::class.java) { psiElement ->
+        StubIndex.getInstance().processElements(MatlabGlobalVariableIndex.KEY, myElement.text, myElement.project, GlobalSearchScope.allScope(myElement.project), MatlabGlobalVariableDeclaration::class.java) { psiElement ->
             res.add(PsiElementResolveResult(psiElement))
             if (psiElement.containingFile == myElement.containingFile) {
                 isGlobalVariable = true
@@ -59,8 +64,8 @@ class MatlabReference(myElement: MatlabRefExpr) : PsiPolyVariantReferenceBase<Ma
         return arrayOf(PsiElementResolveResult(processor.declaration!!))
     }
 
-    private fun <Psi : PsiElement?> resolveIndex(processor: PsiScopeProcessor, indexKey: StubIndexKey<String, Psi>, requiredClass: Class<Psi>) {
-        StubIndex.getInstance().processElements(indexKey, myElement.text, myElement.project, GlobalSearchScope.projectScope(myElement.project), requiredClass) { psiElement ->
+    private fun <Psi : PsiElement?> resolveIndex(processor: PsiScopeProcessor, indexKey: StubIndexKey<String, Psi>, requiredClass: Class<Psi>, scope: GlobalSearchScope) {
+        StubIndex.getInstance().processElements(indexKey, myElement.text, myElement.project, scope, requiredClass) { psiElement ->
             if (psiElement != null) {
                 if (psiElement.containingFile != myElement.containingFile && psiElement.containingFile.name == myElement.text + ".m" &&
                         MatlabPackages.isVisibleByPlainName(psiElement, myElement)) {
