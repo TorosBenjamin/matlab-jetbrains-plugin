@@ -17,6 +17,10 @@
       <li>Inspections: unused variables, functions and imports, unreachable code; MATLAB's own code analyzer
           (mlint) when MATLAB is installed</li>
       <li>Run scripts or single <code>%%</code> sections with MATLAB or GNU Octave, from the gutter</li>
+      <li>Reformat Code, parameter info with types and defaults from <code>arguments</code> blocks</li>
+      <li>MATLAB path: folders outside the project and MATLAB's own toolbox code resolve and complete</li>
+      <li>Go to definition into Python (<code>py.mod.func</code>), Java classes, MEX sources and C libraries
+          (<code>calllib</code>)</li>
       <li>Live templates, Surround With, auto-inserted <code>end</code>, TODO and spell-checking</li>
     </ul>
     <p>Built on <a href="https://github.com/kornilova203/matlab-IntelliJ-plugin">Matlab Support</a> by Liudmila Kornilova.

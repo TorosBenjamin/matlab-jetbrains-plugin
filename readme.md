@@ -21,8 +21,21 @@ Liudmila Kornilova, published as a separate plugin. All credit for the original 
 - **Inspections**: unused variables, functions and imports, unreachable code, unresolved imports, and MATLAB's
   own code analyzer (mlint) when MATLAB is installed
 - **Running** scripts or single `%%` sections with MATLAB or GNU Octave, from the gutter or the context menu
-- **Editing**: auto-inserted `end`, folding of `%%` sections, live templates (`for`, `if`, `fun`, `cls`, ...),
-  Surround With, TODO and spell-checking
+- **Editing**: Reformat Code, parameter info (Ctrl+P, with types and defaults from `arguments` blocks),
+  auto-inserted `end`, folding of `%%` sections, live templates (`for`, `if`, `fun`, `cls`, ...), Surround With,
+  TODO and spell-checking
+- **MATLAB path**: folders outside the project (like `addpath`) and, optionally, MATLAB's own `toolbox/matlab`
+  are indexed, so their functions, classes and packages resolve and complete
+- **Other languages**: go to definition from MATLAB into the code it calls:
+  - Python: `py.mod.func(x)`, `py.pkg.mod.Class`, with completion after `py.`
+  - Java: `java.util.ArrayList()`, `com.example.Util.parse(x)`, after `import com.example.*`, and in
+    `javaObject`/`javaMethod`
+  - C/C++/Fortran: MEX functions (`foo(x)` opens `mexFunction` in `foo.c`), `mex foo.c`, and
+    `calllib('lib', 'func')` into the header passed to `loadlibrary`
+
+  Declarations are found in the files' text, so this works in any JetBrains IDE. Where the IDE supports the
+  language (Python in PyCharm, Java in IntelliJ IDEA, C in CLion), find usages and rename also work from the
+  other language's side.
 
 ## Installation
 Until it's on the JetBrains Marketplace: download the zip from the
@@ -40,6 +53,12 @@ To choose an installation, set its executable in **Settings | Languages & Framew
 configuration can override it. [GNU Octave](https://www.gnu.org/software/octave/) works too.
 
 The settings page also turns the code analyzer (mlint) and auto-inserted `end` on or off.
+
+## MATLAB path
+Code in folders outside the project is found when they're listed under **MATLAB Path** in
+**Settings | Languages & Frameworks | MATLAB**, one per line (relative paths start at the project folder). They show
+up under External Libraries. **Include MATLAB's own code** also indexes `<matlabroot>/toolbox/matlab`, so
+functions such as `linspace` open in the editor; the first indexing takes a while.
 
 ## Development
 Requirements: JDK 25 (the JetBrains Runtime bundled with IntelliJ works: `export JAVA_HOME=<IntelliJ install>/jbr`).
