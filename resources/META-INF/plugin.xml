@@ -39,6 +39,11 @@
     ]]></change-notes>
 
     <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="matlab-java.xml">com.intellij.java</depends>
+
+    <extensionPoints>
+        <extensionPoint name="javaResolver" interface="com.github.kornilova203.matlab.foreign.MatlabJavaResolver" dynamic="true"/>
+    </extensionPoints>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Matlab" fieldName="INSTANCE" extensions="m" language="Matlab"
@@ -102,6 +107,11 @@
         <lang.documentationProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabDocumentationProvider"/>
         <elementDescriptionProvider implementation="com.github.kornilova203.matlab.MatlabElementDescriptionProvider"/>
         <psi.referenceContributor language="Matlab" implementation="com.github.kornilova203.matlab.psi.MatlabMethodSignatureReferenceContributor"/>
+        <psi.referenceContributor language="Matlab" implementation="com.github.kornilova203.matlab.foreign.MatlabForeignReferenceContributor"/>
+        <lang.elementManipulator forClass="com.github.kornilova203.matlab.psi.impl.MatlabLiteralExprImpl"
+                                 implementationClass="com.github.kornilova203.matlab.foreign.MatlabLiteralManipulator"/>
+        <lang.elementManipulator forClass="com.github.kornilova203.matlab.psi.impl.MatlabCommandArgumentsImpl"
+                                 implementationClass="com.github.kornilova203.matlab.foreign.MatlabCommandArgumentsManipulator"/>
         <renamePsiElementProcessor implementation="com.github.kornilova203.matlab.refactoring.MatlabRenameProcessor"/>
         <inlineActionHandler implementation="com.github.kornilova203.matlab.refactoring.MatlabInlineVariableHandler"/>
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>

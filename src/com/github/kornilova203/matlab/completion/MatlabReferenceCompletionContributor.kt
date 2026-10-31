@@ -22,6 +22,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.github.kornilova203.matlab.MatlabLibraryDocs
+import com.github.kornilova203.matlab.foreign.PythonModules
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.PsiTreeUtil
@@ -52,6 +53,10 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
         val qualified = ref.parent as? MatlabQualifiedExpr ?: return false
         if (qualified.lastChild != ref) return false
         val pkg = MatlabPackages.dottedName(qualified.firstChild)
+        if (pkg != null && (pkg == "py" || pkg.startsWith("py."))) {
+            addPythonNames(position.project, pkg.split('.').drop(1), processor.result)
+            return true
+        }
         if (pkg != null && MatlabPackages.isPackage(position.project, pkg)) {
             addPackageMembers(position.project, pkg, processor.result)
             return true
@@ -126,6 +131,18 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
                 .map { it.text.trim('\'', '"') }.filter { it.matches(Regex("[A-Za-z]\\w*")) }.forEach { fields += it }
         }
         fields.forEach { result.addElement(LookupElementBuilder.create(it).withIcon(AllIcons.Nodes.Field)) }
+    }
+
+    /** py.<caret>: Python modules and built-ins; py.mod.<caret>: the module's submodules, functions and classes. */
+    private fun addPythonNames(project: Project, module: List<String>, result: CompletionResultSet) {
+        for ((name, kind) in PythonModules.completions(project, module)) {
+            val icon = when (kind) {
+                PythonModules.Kind.MODULE -> AllIcons.Nodes.Package
+                PythonModules.Kind.CLASS -> AllIcons.Nodes.Class
+                PythonModules.Kind.FUNCTION -> AllIcons.Nodes.Function
+            }
+            result.addElement(LookupElementBuilder.create(name).withIcon(icon).withTypeText(if (module.isEmpty()) "Python" else module.joinToString(".")))
+        }
     }
 
     companion object {

@@ -26,6 +26,8 @@ dependencies {
         // Structure view classes moved from the core platform into this bundled plugin in 2026.x.
         bundledPlugin("intellij.structureView.plugin")
         bundledModule("intellij.spellchecker")
+        // Optional: Java classes called from MATLAB resolve through the Java plugin when it's installed
+        bundledPlugin("com.intellij.java")
         testFramework(TestFrameworkType.Platform)
         pluginVerifier()
     }

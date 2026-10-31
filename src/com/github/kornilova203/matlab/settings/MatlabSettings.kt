@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
 
 /** IDE-wide MATLAB plugin settings, stored in matlab.xml. */
 @Service(Service.Level.APP)
