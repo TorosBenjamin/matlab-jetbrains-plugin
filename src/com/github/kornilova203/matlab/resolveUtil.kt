@@ -3,6 +3,7 @@ package com.github.kornilova203.matlab
 import com.github.kornilova203.matlab.psi.*
 import com.github.kornilova203.matlab.psi.types.MatlabTypeClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
@@ -71,17 +72,27 @@ fun processDeclarations(parent: PsiElement, processor: PsiScopeProcessor, state:
     return lastParent?.forEachSiblingForward { it.findDeclaration(processor, state, inCurrentScope, seesLaterDeclarations) } ?: true
 }
 
+/** Members of the class of [type]: its own first, then those inherited from superclasses (not private ones). */
 fun processDeclarationsInClass(processor: PsiScopeProcessor, state: ResolveState, type: MatlabTypeClass): Boolean {
     val classDeclaration = type.decl
-    val declarations = PsiTreeUtil.findChildrenOfAnyType(classDeclaration, false,
+    if (!processClassMembers(processor, state, classDeclaration, inherited = false)) return false
+    for (superClass in MatlabInheritance.allSuperClasses(classDeclaration)) {
+        if (!processClassMembers(processor, state, superClass, inherited = true)) return false
+    }
+    return false
+}
+
+private fun processClassMembers(processor: PsiScopeProcessor, state: ResolveState, cls: MatlabClassDeclaration, inherited: Boolean): Boolean {
+    val declarations = PsiTreeUtil.findChildrenOfAnyType(cls, false,
             MatlabProperty::class.java,
             MatlabFunctionDeclaration::class.java,
             MatlabEnumItem::class.java)
-
-    for (declaration in declarations + MatlabPackages.methodFiles(classDeclaration)) {
-        if (!processor.execute(declaration, state)) {
-            break
-        }
+    val className = (cls as PsiNamedElement).name
+    for (declaration in declarations + MatlabPackages.methodFiles(cls)) {
+        // A subclass doesn't get the superclass's constructor or private members
+        if (inherited && (MatlabInheritance.isPrivate(declaration) ||
+                    declaration is MatlabFunctionDeclaration && (declaration as PsiNamedElement).name == className)) continue
+        if (!processor.execute(declaration, state)) return false
     }
-    return false
+    return true
 }

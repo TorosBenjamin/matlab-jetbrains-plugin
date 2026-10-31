@@ -1,6 +1,7 @@
 package com.github.kornilova203.matlab.resolve
 
 import com.github.kornilova203.matlab.MatlabReference
+import com.github.kornilova203.matlab.matlabReference
 import com.github.kornilova203.matlab.psi.MatlabDeclaration
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -78,7 +79,7 @@ class ResolveTest : BasePlatformTestCase() {
             el = el.parent
         }
         if (el != null) assertInstanceOf(el, MatlabDeclaration::class.java)
-        return file.findReferenceAt(refOffset) as MatlabReference to el as? MatlabDeclaration
+        return matlabReference(file.findReferenceAt(refOffset)) to el as? MatlabDeclaration
     }
 
     private fun String.cutOut(markerOffset: Int, markerLength: Int): String {

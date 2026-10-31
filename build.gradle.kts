@@ -26,6 +26,8 @@ dependencies {
         // Structure view classes moved from the core platform into this bundled plugin in 2026.x.
         bundledPlugin("intellij.structureView.plugin")
         bundledModule("intellij.spellchecker")
+        // Optional: Java classes called from MATLAB resolve through the Java plugin when it's installed
+        bundledPlugin("com.intellij.java")
         testFramework(TestFrameworkType.Platform)
         pluginVerifier()
     }
@@ -85,10 +87,17 @@ intellijPlatform {
 
 
 tasks.test {
+    // Tests read testData/ from the checkout. Only folders under the user's home are allowed by default,
+    // which on Windows CI (checkout on D:) excludes it.
+    systemProperty("vfs.additional-allowed-roots", layout.projectDirectory.asFile.path)
     // Optional: folder of MATLAB code for CorpusParsingTest (-PmatlabCorpus=/path).
     systemProperty("matlab.corpus", findProperty("matlabCorpus")?.toString() ?: "")
     systemProperty("matlab.corpus.report", layout.buildDirectory.file("corpus-report.txt").get().asFile.path)
-    testLogging { showStandardStreams = findProperty("matlabCorpus") != null }
+    testLogging {
+        showStandardStreams = findProperty("matlabCorpus") != null
+        // Show expected and actual text of failed comparisons in the build output (and CI logs)
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 // Regenerate lexers and parser into gen/ (committed, so normal builds don't need this):

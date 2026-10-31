@@ -34,10 +34,19 @@ object MatlabInstallations {
         return mlintCache.computeIfAbsent(interpreter) { java.util.Optional.ofNullable(mlintNextTo(it)) }.orElse(null)
     }
 
+    /** The MATLAB installation folder (matlabroot) of the interpreter that would run scripts; null for Octave. */
+    fun findMatlabRoot(): File? {
+        val interpreter = resolveInterpreter(null) ?: return null
+        val bin = binFolder(interpreter) ?: return null
+        return bin.parentFile?.takeIf { File(it, "toolbox").isDirectory }
+    }
+
+    // bin/matlab may be a symlink, e.g. /usr/local/bin/matlab -> /usr/local/MATLAB/R2025b/bin/matlab
+    private fun binFolder(interpreter: String): File? =
+        File(interpreter).canonicalFile.parentFile?.takeIf { it.name == "bin" }
+
     private fun mlintNextTo(interpreter: String): String? {
-        // bin/matlab may be a symlink, e.g. /usr/local/bin/matlab -> /usr/local/MATLAB/R2025b/bin/matlab
-        val bin = File(interpreter).canonicalFile.parentFile ?: return null
-        if (bin.name != "bin") return null
+        val bin = binFolder(interpreter) ?: return null
         val archDirs = bin.listFiles { f -> f.isDirectory }.orEmpty().sortedBy { it.name }
         return archDirs.map { File(it, executable("mlint")) }.firstOrNull { it.isFile }?.path
     }

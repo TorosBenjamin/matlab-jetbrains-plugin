@@ -17,6 +17,10 @@
       <li>Inspections: unused variables, functions and imports, unreachable code; MATLAB's own code analyzer
           (mlint) when MATLAB is installed</li>
       <li>Run scripts or single <code>%%</code> sections with MATLAB or GNU Octave, from the gutter</li>
+      <li>Reformat Code, parameter info with types and defaults from <code>arguments</code> blocks</li>
+      <li>MATLAB path: folders outside the project and MATLAB's own toolbox code resolve and complete</li>
+      <li>Go to definition into Python (<code>py.mod.func</code>), Java classes, MEX sources and C libraries
+          (<code>calllib</code>)</li>
       <li>Live templates, Surround With, auto-inserted <code>end</code>, TODO and spell-checking</li>
     </ul>
     <p>Built on <a href="https://github.com/kornilova203/matlab-IntelliJ-plugin">Matlab Support</a> by Liudmila Kornilova.
@@ -39,14 +43,20 @@
     ]]></change-notes>
 
     <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="matlab-java.xml">com.intellij.java</depends>
+
+    <extensionPoints>
+        <extensionPoint name="javaResolver" interface="com.github.kornilova203.matlab.foreign.MatlabJavaResolver" dynamic="true"/>
+    </extensionPoints>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Matlab" fieldName="INSTANCE" extensions="m" language="Matlab"
                   implementationClass="com.github.kornilova203.matlab.MatlabFileType"/>
         <lang.parserDefinition language="Matlab"
                                implementationClass="com.github.kornilova203.matlab.MatlabParserDefinition"/>
-        <applicationConfigurable parentId="language" id="matlab.settings" displayName="MATLAB"
-                                 instance="com.github.kornilova203.matlab.settings.MatlabSettingsConfigurable"/>
+        <projectConfigurable parentId="language" id="matlab.settings" displayName="MATLAB"
+                             instance="com.github.kornilova203.matlab.settings.MatlabSettingsConfigurable"/>
+        <additionalLibraryRootsProvider implementation="com.github.kornilova203.matlab.path.MatlabPathLibraryProvider"/>
         <gotoClassContributor implementation="com.github.kornilova203.matlab.navigation.MatlabGotoClassContributor"/>
         <gotoSymbolContributor implementation="com.github.kornilova203.matlab.navigation.MatlabGotoSymbolContributor"/>
         <itemPresentationProvider forClass="com.github.kornilova203.matlab.psi.impl.MatlabFunctionDeclarationImpl"
@@ -97,21 +107,32 @@
         <breadcrumbsInfoProvider implementation="com.github.kornilova203.matlab.structure.MatlabBreadcrumbsProvider"/>
         <lang.foldingBuilder language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabFoldingBuilder"/>
         <lineIndentProvider implementation="com.github.kornilova203.matlab.MatlabLineIndentProvider"/>
+        <lang.formatter language="Matlab" implementationClass="com.github.kornilova203.matlab.formatter.MatlabFormattingModelBuilder"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterInStringLiteralHandler"/>
         <lang.documentationProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabDocumentationProvider"/>
         <elementDescriptionProvider implementation="com.github.kornilova203.matlab.MatlabElementDescriptionProvider"/>
         <psi.referenceContributor language="Matlab" implementation="com.github.kornilova203.matlab.psi.MatlabMethodSignatureReferenceContributor"/>
+        <psi.referenceContributor language="Matlab" implementation="com.github.kornilova203.matlab.foreign.MatlabForeignReferenceContributor"/>
+        <lang.elementManipulator forClass="com.github.kornilova203.matlab.psi.impl.MatlabLiteralExprImpl"
+                                 implementationClass="com.github.kornilova203.matlab.foreign.MatlabLiteralManipulator"/>
+        <lang.elementManipulator forClass="com.github.kornilova203.matlab.psi.impl.MatlabCommandArgumentsImpl"
+                                 implementationClass="com.github.kornilova203.matlab.foreign.MatlabCommandArgumentsManipulator"/>
         <renamePsiElementProcessor implementation="com.github.kornilova203.matlab.refactoring.MatlabRenameProcessor"/>
         <inlineActionHandler implementation="com.github.kornilova203.matlab.refactoring.MatlabInlineVariableHandler"/>
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEndInserter"/>
+        <codeInsight.parameterInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.editor.MatlabParameterInfoHandler"/>
         <codeInsight.typeInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabTypeProvider"/>
 
         <stubElementTypeHolder class="com.github.kornilova203.matlab.psi.MatlabTypes"/>
         <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabFunctionDeclarationIndex"/>
         <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabClassDeclarationIndex"/>
         <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabGlobalVariableIndex"/>
+        <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabSubclassIndex"/>
+        <codeInsight.lineMarkerProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.navigation.MatlabInheritanceLineMarkerProvider"/>
+        <definitionsScopedSearch implementation="com.github.kornilova203.matlab.navigation.MatlabDefinitionsSearch"/>
+        <codeInsight.gotoSuper language="Matlab" implementationClass="com.github.kornilova203.matlab.navigation.MatlabGotoSuperHandler"/>
         
         <localInspection language="Matlab" shortName="MatlabUnreachableCode" displayName="Unreachable code" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnreachableCodeInspection"/>

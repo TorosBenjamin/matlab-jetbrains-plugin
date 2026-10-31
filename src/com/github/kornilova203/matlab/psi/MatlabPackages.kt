@@ -1,7 +1,10 @@
 package com.github.kornilova203.matlab.psi
 
 import com.intellij.openapi.project.Project
+import com.github.kornilova203.matlab.path.MatlabPath
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
@@ -33,15 +36,22 @@ object MatlabPackages {
         return if (parts.isEmpty()) null else parts.joinToString(".")
     }
 
-    /** All package folders in the project by package name; one package may span several folders. */
+    /**
+     * All package folders in the project and on the MATLAB path by package name; one package may span
+     * several folders. The project's folders come first.
+     */
     private fun index(project: Project): Map<String, List<VirtualFile>> =
         CachedValuesManager.getManager(project).getCachedValue(project) {
-            val map = HashMap<String, MutableList<VirtualFile>>()
-            ProjectFileIndex.getInstance(project).iterateContent { file ->
-                if (file.isDirectory && file.name.startsWith("+")) packageOf(file)?.let { map.getOrPut(it) { ArrayList() } += file }
-                true
+            val map = HashMap<String, MutableSet<VirtualFile>>()
+            fun add(file: VirtualFile) {
+                if (file.isDirectory && file.name.startsWith("+")) packageOf(file)?.let { map.getOrPut(it) { LinkedHashSet() } += file }
             }
-            CachedValueProvider.Result.create(map as Map<String, List<VirtualFile>>, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS)
+            ProjectFileIndex.getInstance(project).iterateContent { file -> add(file); true }
+            for (root in MatlabPath.roots(project)) {
+                VfsUtilCore.iterateChildrenRecursively(root, { it.isDirectory }) { file -> add(file); true }
+            }
+            CachedValueProvider.Result.create(map.mapValues { it.value.toList() },
+                VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS, ProjectRootModificationTracker.getInstance(project))
         }
 
     fun isPackage(project: Project, name: String): Boolean = index(project).containsKey(name)

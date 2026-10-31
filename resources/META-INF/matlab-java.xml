@@ -1,0 +1,6 @@
+<!-- Loaded when the Java plugin is installed (IntelliJ IDEA, Android Studio) -->
+<idea-plugin>
+    <extensions defaultExtensionNs="io.github.bendzsi.matlab">
+        <javaResolver implementation="com.github.kornilova203.matlab.foreign.java.MatlabJavaPsiResolver"/>
+    </extensions>
+</idea-plugin>
