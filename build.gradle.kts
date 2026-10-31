@@ -87,6 +87,9 @@ intellijPlatform {
 
 
 tasks.test {
+    // Tests read testData/ from the checkout. Only folders under the user's home are allowed by default,
+    // which on Windows CI (checkout on D:) excludes it.
+    systemProperty("vfs.additional-allowed-roots", layout.projectDirectory.asFile.path)
     // Optional: folder of MATLAB code for CorpusParsingTest (-PmatlabCorpus=/path).
     systemProperty("matlab.corpus", findProperty("matlabCorpus")?.toString() ?: "")
     systemProperty("matlab.corpus.report", layout.buildDirectory.file("corpus-report.txt").get().asFile.path)
