@@ -11,6 +11,6 @@ fun getTestDataRoot(clazz: Class<*>): String {
 /** The MATLAB reference among the references at an offset (names can also refer to Python, Java or C code). */
 fun matlabReference(reference: com.intellij.psi.PsiReference?): MatlabReference = when (reference) {
     is MatlabReference -> reference
-    is com.intellij.psi.PsiMultiReference -> reference.references.filterIsInstance<MatlabReference>().single()
+    is com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference -> reference.references.filterIsInstance<MatlabReference>().single()
     else -> throw AssertionError("Not a MATLAB reference: $reference")
 }
