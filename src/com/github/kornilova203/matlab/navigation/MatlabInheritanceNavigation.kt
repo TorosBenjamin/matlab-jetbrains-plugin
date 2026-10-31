@@ -8,12 +8,13 @@ import com.github.kornilova203.matlab.psi.MatlabTypes
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
-import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -97,7 +98,14 @@ class MatlabGotoSuperHandler : LanguageCodeInsightActionHandler {
         when {
             targets.isEmpty() -> return
             targets.size == 1 -> (targets[0] as? Navigatable)?.navigate(true)
-            else -> NavigationUtil.getPsiElementPopup(targets.toTypedArray(), "Choose Super").showInBestPositionFor(editor)
+            else -> JBPopupFactory.getInstance().createPopupChooserBuilder(targets)
+                .setTitle("Choose Super")
+                .setRenderer(SimpleListCellRenderer.create("") { target ->
+                    (target as? PsiNamedElement)?.name + " (" + target.containingFile?.name + ")"
+                })
+                .setItemChosenCallback { (it as? Navigatable)?.navigate(true) }
+                .createPopup()
+                .showInBestPositionFor(editor)
         }
     }
 
