@@ -26,7 +26,8 @@ class MatlabUnusedFunctionInspection : LocalInspectionTool() {
             if (ReferencesSearch.search(function, scope).findFirst() != null) return
             if (isNamedInString(function.containingFile, name)) return  // feval('name'), callbacks
             val target = (function as com.intellij.psi.PsiNameIdentifierOwner).nameIdentifier ?: return
-            holder.registerProblem(target, "$kind '$name' is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+            holder.registerProblem(target, "$kind '$name' is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                RemoveFunctionFix(function, "${kind.lowercase()} '$name'"))
         }
     }
 

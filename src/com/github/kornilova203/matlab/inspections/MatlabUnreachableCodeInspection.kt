@@ -31,7 +31,7 @@ class MatlabUnreachableCodeInspection : LocalInspectionTool() {
                             continue
                         }
                         if (!generateSequence(element.parent) { if (it is PsiFile) null else it.parent }.any {unreachable.contains(it)}) {
-                            holder.registerProblem(element, "Unreachable code")
+                            holder.registerProblem(element, "Unreachable code", RemoveUnreachableCodeFix(element))
                         }
                     }
                 }

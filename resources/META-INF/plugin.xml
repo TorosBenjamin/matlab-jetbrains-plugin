@@ -150,6 +150,16 @@
         <codeInsight.daemonBoundCodeVisionProvider implementation="com.github.kornilova203.matlab.codeVision.MatlabUsagesCodeVisionProvider"/>
         <localInspection language="Matlab" shortName="MatlabUnusedVariable" displayName="Unused variable and parameters" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedVariableInspection"/>
+        <intentionAction>
+            <language>Matlab</language>
+            <className>com.github.kornilova203.matlab.editor.MatlabCreateFunctionFileIntention</className>
+            <category>MATLAB</category>
+        </intentionAction>
+        <intentionAction>
+            <language>Matlab</language>
+            <className>com.github.kornilova203.matlab.editor.MatlabCreateLocalFunctionIntention</className>
+            <category>MATLAB</category>
+        </intentionAction>
         <highlightUsagesHandlerFactory implementation="com.github.kornilova203.matlab.highlighting.MatlabBlockKeywordHighlighterFactory"/>
         
     </extensions>

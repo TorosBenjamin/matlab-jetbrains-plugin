@@ -38,7 +38,7 @@ class MatlabUnusedImportInspection : LocalInspectionTool() {
                 if (isUsed) continue
                 val start = text.indexOf(arg).takeIf { it >= 0 } ?: continue
                 holder.registerProblem(statement.commandArguments, "Unused import '$arg'",
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, TextRange(start, start + arg.length))
+                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, TextRange(start, start + arg.length), RemoveImportFix(statement, arg))
             }
         }
     }

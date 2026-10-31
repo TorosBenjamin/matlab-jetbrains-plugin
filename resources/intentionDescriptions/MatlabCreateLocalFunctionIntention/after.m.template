@@ -1,0 +1,5 @@
+y = scale(x, 2);
+
+function y = scale(x, arg2)
+    
+end

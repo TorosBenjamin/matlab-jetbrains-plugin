@@ -1,0 +1,4 @@
+% scale.m
+function y = scale(x, arg2)
+    
+end

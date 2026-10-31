@@ -35,7 +35,7 @@ class MatlabUnresolvedImportInspection : LocalInspectionTool() {
                 val start = args.text.indexOf(arg)
                 if (start < 0) continue
                 holder.registerProblem(args, "Cannot find '$problem'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                    TextRange(start, start + arg.length))
+                    TextRange(start, start + arg.length), RemoveImportFix(statement, arg))
             }
         }
     }
