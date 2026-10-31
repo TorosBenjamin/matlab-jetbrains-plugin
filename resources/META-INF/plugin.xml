@@ -129,6 +129,10 @@
         <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabFunctionDeclarationIndex"/>
         <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabClassDeclarationIndex"/>
         <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabGlobalVariableIndex"/>
+        <stubIndex implementation="com.github.kornilova203.matlab.stub.MatlabSubclassIndex"/>
+        <codeInsight.lineMarkerProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.navigation.MatlabInheritanceLineMarkerProvider"/>
+        <definitionsScopedSearch implementation="com.github.kornilova203.matlab.navigation.MatlabDefinitionsSearch"/>
+        <codeInsight.gotoSuper language="Matlab" implementationClass="com.github.kornilova203.matlab.navigation.MatlabGotoSuperHandler"/>
         
         <localInspection language="Matlab" shortName="MatlabUnreachableCode" displayName="Unreachable code" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnreachableCodeInspection"/>
