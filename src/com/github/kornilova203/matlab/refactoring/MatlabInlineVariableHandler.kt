@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -88,16 +89,19 @@ class MatlabInlineVariableHandler : InlineActionHandler() {
         }
         
         WriteCommandAction.runWriteCommandAction(project) {
-            for (occurrence in occurrences) {
-                if (isNeedParenthesis(value, occurrence)) {
-                    occurrence.replace(createElementFromText(project, "(${value.text})"))
-                } else {
-                    occurrence.replace(value)
+            // The edits keep the surrounding code as it is; don't let the formatter touch the lines around them
+            PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(Runnable {
+                for (occurrence in occurrences) {
+                    if (isNeedParenthesis(value, occurrence)) {
+                        occurrence.replace(createElementFromText(project, "(${value.text})"))
+                    } else {
+                        occurrence.replace(value)
+                    }
                 }
-            }
-            if (removeDeclaration) {
-                deleteExpr(declaration)
-            }
+                if (removeDeclaration) {
+                    deleteExpr(declaration)
+                }
+            })
         }
     }
 
