@@ -1,6 +1,7 @@
 package com.github.kornilova203.matlab.resolve
 
 import com.github.kornilova203.matlab.MatlabReference
+import com.github.kornilova203.matlab.matlabReference
 import com.github.kornilova203.matlab.psi.MatlabDeclaration
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -81,7 +82,7 @@ class MultifileResolveTest : BasePlatformTestCase() {
             declElement = declElement.parent
         }
         if (declElement != null) assertInstanceOf(declElement, MatlabDeclaration::class.java)
-        return refFile.findReferenceAt(refOffset) as MatlabReference to declElement as? MatlabDeclaration
+        return matlabReference(refFile.findReferenceAt(refOffset)) to declElement as? MatlabDeclaration
     }
 
     private fun String.cutOut(markerOffset: Int, markerLength: Int): String {

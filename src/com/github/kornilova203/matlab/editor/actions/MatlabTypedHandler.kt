@@ -1,6 +1,8 @@
 package com.github.kornilova203.matlab.editor.actions
 
 import com.github.kornilova203.matlab.psi.MatlabCaseBlock
+import com.github.kornilova203.matlab.psi.MatlabFile
+import com.intellij.codeInsight.AutoPopupController
 import com.github.kornilova203.matlab.psi.MatlabTypes
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
@@ -19,6 +21,12 @@ class MatlabTypedHandler : TypedHandlerDelegate() {
         if (c.isWhitespace()) {
             reduceIndent(project, editor, file)
         }
+        return Result.CONTINUE
+    }
+
+    /** Shows parameter info after typing `(` of a call, if that's turned on in Settings | Editor | General | Code Completion. */
+    override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
+        if (charTyped == '(' && file is MatlabFile) AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
         return Result.CONTINUE
     }
 }

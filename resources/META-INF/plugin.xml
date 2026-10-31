@@ -103,6 +103,7 @@
         <breadcrumbsInfoProvider implementation="com.github.kornilova203.matlab.structure.MatlabBreadcrumbsProvider"/>
         <lang.foldingBuilder language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabFoldingBuilder"/>
         <lineIndentProvider implementation="com.github.kornilova203.matlab.MatlabLineIndentProvider"/>
+        <lang.formatter language="Matlab" implementationClass="com.github.kornilova203.matlab.formatter.MatlabFormattingModelBuilder"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterInStringLiteralHandler"/>
         <lang.documentationProvider language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabDocumentationProvider"/>
         <elementDescriptionProvider implementation="com.github.kornilova203.matlab.MatlabElementDescriptionProvider"/>
@@ -117,6 +118,7 @@
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEndInserter"/>
+        <codeInsight.parameterInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.editor.MatlabParameterInfoHandler"/>
         <codeInsight.typeInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabTypeProvider"/>
 
         <stubElementTypeHolder class="com.github.kornilova203.matlab.psi.MatlabTypes"/>

@@ -47,10 +47,13 @@ object JavaClasses {
             if (!segments[i].first().isUpperCase()) continue
             val source = ForeignFiles.byPath(project, segments.subList(0, i), segments[i] + ".java", near).firstOrNull() ?: continue
             val file = ForeignFiles.psi(project, source) ?: continue
+            val text = ForeignFiles.text(file)
             var target: PsiElement = file
             var from = 0
-            for (nested in segments.subList(i, segments.size)) {
-                val offset = findDeclaration(ForeignFiles.text(file).substring(from), classDeclaration(nested))?.plus(from) ?: return target
+            for ((j, nested) in segments.subList(i, segments.size).withIndex()) {
+                // No declaration of the file's own class: the file; of a nested class: maybe a member (Util.MAX)
+                val offset = findDeclaration(text.substring(from), classDeclaration(nested))?.plus(from)
+                    ?: return if (j == 0) file else null
                 target = foreignTarget(file, offset, nested)
                 from = offset
             }
