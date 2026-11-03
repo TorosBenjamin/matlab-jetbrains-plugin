@@ -21,6 +21,7 @@
       <li>MATLAB path: folders outside the project and MATLAB's own toolbox code resolve and complete</li>
       <li>Go to definition into Python (<code>py.mod.func</code>), Java classes, MEX sources and C libraries
           (<code>calllib</code>)</li>
+      <li>Quick fixes: remove unused imports and functions, create missing functions</li>
       <li>Live templates, Surround With, auto-inserted <code>end</code>, TODO and spell-checking</li>
     </ul>
     <p>Built on <a href="https://github.com/kornilova203/matlab-IntelliJ-plugin">Matlab Support</a> by Liudmila Kornilova.
@@ -30,6 +31,15 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.1.0</p>
+    <ul>
+      <li>MATLAB path: folders outside the project and, optionally, MATLAB's own toolbox code resolve and complete</li>
+      <li>Go to definition into Python (<code>py.mod.func</code>), Java classes, MEX sources and C libraries (<code>calllib</code>)</li>
+      <li>Class inheritance: inherited members, gutter icons, go to implementation and super method</li>
+      <li>Parameter info with types and defaults from <code>arguments</code> blocks</li>
+      <li>Reformat Code</li>
+      <li>Quick fixes: remove unused imports, functions and unreachable code; create missing functions</li>
+    </ul>
     <p>1.0.0: first release as a separate plugin, continuing <i>Matlab Support</i> 0.8.5.</p>
     <ul>
       <li>Parser: command syntax, arguments blocks, persistent, packages, imports, superclass calls, method signatures</li>

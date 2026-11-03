@@ -28,6 +28,9 @@ jobs:
       - name: Build plugin
         if: matrix.os == 'ubuntu-latest'
         run: ./gradlew buildPlugin
+      - name: Check compatibility with the supported IDE versions
+        if: matrix.os == 'ubuntu-latest'
+        run: ./gradlew verifyPlugin
       - name: Upload plugin
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
