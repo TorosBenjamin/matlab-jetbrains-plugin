@@ -2,17 +2,25 @@ package com.github.kornilova203.matlab.execution.console
 
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.filters.TextConsoleBuilderFactory
-import com.intellij.execution.process.KillableColoredProcessHandler
+import com.github.kornilova203.matlab.MatlabLanguage
+import com.intellij.execution.console.BaseConsoleExecuteActionHandler
+import com.intellij.execution.console.LanguageConsoleBuilder
+import com.intellij.execution.console.LanguageConsoleView
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.BaseOSProcessHandler
+import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
-import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -27,20 +35,50 @@ import java.nio.charset.StandardCharsets
  *  - Octave: `octave-cli --interactive`
  */
 class MatlabConsoleSession(val project: Project, val name: String, val interpreter: String, workingDirectory: String?) : Disposable {
-    val console: ConsoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).console
     private val kind = Kind.of(interpreter)
     val processHandler: ProcessHandler
 
+    /** The session's variables, if this kind of session can list them (MATLAB and Octave). */
+    val workspace = MatlabWorkspace()
+    private val listsWorkspace = kind != Kind.OTHER
+
+    /** Set when a command was sent: the workspace is listed again once MATLAB is back at its prompt. */
+    @Volatile
+    private var workspaceChanged = true
+
+    /** Output above, a MATLAB input line below it, with completion and history (up and down). */
+    val console: LanguageConsoleView = LanguageConsoleBuilder()
+        .executionEnabled { isAlive }
+        .initActions(object : BaseConsoleExecuteActionHandler(false) {
+            override fun execute(text: String, console: LanguageConsoleView) = typed(text)
+        }, "matlab")
+        .build(project, MatlabLanguage.INSTANCE)
+
     init {
         Disposer.register(this, console)
+        // MATLAB prints its own ">> " prompt in the output
+        console.prompt = ""
+        console.virtualFile.putUserData(MatlabWorkspace.KEY, workspace)
         val commandLine = commandLine(kind, interpreter, workingDirectory)
-        processHandler = object : KillableColoredProcessHandler(commandLine) {
-            // What the user types in the console goes through here: `clc` clears the console
-            private val watched by lazy { ClcWatchingStream(super.getProcessInput()) { clearConsole() } }
-            override fun getProcessInput(): java.io.OutputStream? = super.getProcessInput()?.let { watched }
-        }
+        // Not the colored handler: its escape-code decoding mustn't touch the workspace markers
+        processHandler = KillableProcessHandler(commandLine)
         ProcessTerminatedListener.attach(processHandler, project, "\n$name exited with code \$EXIT_CODE$\n")
-        console.attachToProcess(processHandler)
+        val filter = MatlabOutputFilter(
+            onWorkspace = { workspace.update(MatlabWorkspace.parse(it)) },
+            onPrompt = {
+                if (workspaceChanged) {
+                    workspaceChanged = false
+                    write(MatlabConsoleCode.workspaceQuery())
+                }
+            })
+        processHandler.addProcessListener(object : ProcessListener {
+            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                val type = ConsoleViewContentType.getConsoleViewType(outputType)
+                val shown = if (listsWorkspace && outputType != ProcessOutputTypes.SYSTEM && !ProcessOutputType.isStderr(outputType))
+                    filter.feed(event.text) else event.text
+                if (shown.isNotEmpty()) console.print(shown, type)
+            }
+        })
         processHandler.startNotify()
     }
 
@@ -53,6 +91,19 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     fun send(command: String, code: String? = null) {
         if (callsClc(command) || code != null && callsClc(code)) clearConsole()
         console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
+        execute(command)
+    }
+
+    /** What the user entered in the console's input (already shown in the output). */
+    private fun typed(text: String) {
+        if (callsClc(text)) clearConsole()
+        val lines = text.lines().dropLastWhile { it.isBlank() }
+        // Several lines (a loop, say) run as a script: the Windows engine takes one line per command
+        execute(if (lines.size <= 1) text.trim() else MatlabConsoleCode.runCode(text))
+    }
+
+    private fun execute(command: String) {
+        workspaceChanged = true
         write(command)
     }
 
@@ -62,9 +113,9 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
      */
     private fun clearConsole() = console.clear()
 
+    @Synchronized
     private fun write(line: String) {
-        // Past the clc watcher: send() has handled clc already
-        val input = (processHandler as? KillableColoredProcessHandler)?.process?.outputStream ?: return
+        val input = processHandler.processInput ?: return
         try {
             input.write((line + "\n").toByteArray(kind.charset))
             input.flush()
@@ -81,7 +132,7 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
             return true
         }
         if (SystemInfo.isWindows) return false
-        val process = (processHandler as? KillableColoredProcessHandler)?.process ?: return false
+        val process = (processHandler as? BaseOSProcessHandler)?.process ?: return false
         // SIGINT, as Ctrl+C in a terminal
         return try {
             ProcessBuilder("kill", "-INT", process.pid().toString()).start().waitFor() == 0
@@ -98,26 +149,6 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         ApplicationManager.getApplication().executeOnPooledThread {
             if (!handler.waitFor(10_000)) handler.destroyProcess()
         }
-    }
-
-    /** Passes everything on to [target]; calls [onClc] for each line that calls clc. */
-    private class ClcWatchingStream(private val target: java.io.OutputStream, private val onClc: () -> Unit) : java.io.OutputStream() {
-        private val line = java.io.ByteArrayOutputStream()
-
-        override fun write(b: Int) {
-            target.write(b)
-            if (b == '\n'.code) {
-                if (callsClc(line.toString(Charsets.UTF_8))) onClc()
-                line.reset()
-            } else if (line.size() < 10_000) line.write(b)
-        }
-
-        override fun write(b: ByteArray, off: Int, len: Int) {
-            for (i in off until off + len) write(b[i].toInt())
-        }
-
-        override fun flush() = target.flush()
-        override fun close() = target.close()
     }
 
     enum class Kind(val charset: java.nio.charset.Charset) {

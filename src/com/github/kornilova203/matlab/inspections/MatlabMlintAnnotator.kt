@@ -38,6 +38,8 @@ class MatlabMlintAnnotator : ExternalAnnotator<MatlabMlintAnnotator.Input, List<
 
     private fun collect(file: PsiFile): Input? {
         if (file !is MatlabFile || !MatlabSettings.getInstance().useMlint) return null
+        // Not in a console's input: one command, whose variables live on in the workspace
+        if (com.github.kornilova203.matlab.execution.console.MatlabWorkspace.of(file) != null) return null
         val mlint = MatlabInstallations.findMlint() ?: return null
         return Input(file.name, file.text, mlint)
     }

@@ -114,6 +114,10 @@
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabReferenceCompletionContributor"/>
         <completion.contributor language="Matlab"
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabLibraryFunctionCompletionContributor"/>
+        <completion.contributor language="Matlab"
+                                implementationClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleCompletionContributor"/>
+        <lang.inspectionSuppressor language="Matlab"
+                                   implementationClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleInspectionSuppressor"/>
         <lang.findUsagesProvider language="Matlab"
                                  implementationClass="com.github.kornilova203.matlab.MatlabFindUsagesProvider"/>
         <externalAnnotator language="Matlab" implementationClass="com.github.kornilova203.matlab.inspections.MatlabMlintAnnotator"/>
