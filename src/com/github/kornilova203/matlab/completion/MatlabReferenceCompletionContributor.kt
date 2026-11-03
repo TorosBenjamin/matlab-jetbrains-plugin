@@ -75,6 +75,7 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
         }
         val imports = MatlabPackages.imports(position)
         for (pkg in imports.packages) addPackageMembers(project, pkg, result)
+        addImportableMembers(position, imports, result)
         val stubs = mutableListOf<LookupElement>()
         // The project's files, then the MATLAB path. Names already offered are skipped: the project's own
         // function shadows one on the path, and MATLAB's functions come with the built-in function list.
@@ -131,6 +132,32 @@ class MatlabReferenceCompletionContributor : CompletionContributor() {
                 .map { it.text.trim('\'', '"') }.filter { it.matches(Regex("[A-Za-z]\\w*")) }.forEach { fields += it }
         }
         fields.forEach { result.addElement(LookupElementBuilder.create(it).withIcon(AllIcons.Nodes.Field)) }
+    }
+
+    /**
+     * Members of packages that aren't imported here yet, `Point (geometry)`: choosing one adds
+     * `import geometry.Point` to the function (or script).
+     */
+    private fun addImportableMembers(position: PsiElement, imports: MatlabPackages.Imports, result: CompletionResultSet) {
+        val matcher = result.prefixMatcher
+        if (matcher.prefix.isEmpty()) return  // all members of all packages would be too many
+        for ((name, packages) in MatlabPackages.packagesByMember(position.project)) {
+            if (!matcher.prefixMatches(name)) continue
+            for (pkg in packages) {
+                val qualified = "$pkg.$name"
+                if (pkg in imports.packages || qualified in imports.names) continue  // offered already
+                val icon = if (name.first().isUpperCase()) AllIcons.Nodes.Class else AllIcons.Nodes.Function
+                result.addElement(LookupElementBuilder.create(qualified, name)
+                    .withIcon(icon)
+                    .withTailText(" ($pkg)", true)
+                    .withTypeText("import")
+                    .withInsertHandler { context, _ ->
+                        context.commitDocument()
+                        val element = context.file.findElementAt(context.startOffset) ?: return@withInsertHandler
+                        com.github.kornilova203.matlab.imports.MatlabImports.addImport(element, qualified)
+                    })
+            }
+        }
     }
 
     /** py.<caret>: Python modules and built-ins; py.mod.<caret>: the module's submodules, functions and classes. */

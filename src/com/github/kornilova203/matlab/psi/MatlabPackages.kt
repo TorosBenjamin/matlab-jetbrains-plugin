@@ -55,6 +55,29 @@ object MatlabPackages {
         }
 
     fun isPackage(project: Project, name: String): Boolean = index(project).containsKey(name)
+
+    /**
+     * Packages by the names of their functions and classes: "Point" -> [geometry, shapes.legacy]. From file
+     * and folder names only (name.m, @Name), so it's cheap even for large toolboxes.
+     */
+    fun packagesByMember(project: Project): Map<String, List<String>> =
+        CachedValuesManager.getManager(project).getCachedValue(project) {
+            val map = HashMap<String, MutableSet<String>>()
+            for ((pkg, dirs) in index(project)) {
+                for (dir in dirs) {
+                    for (child in dir.children) {
+                        val name = when {
+                            child.isDirectory && child.name.startsWith("@") -> child.name.substring(1)
+                            !child.isDirectory && child.extension == "m" -> child.nameWithoutExtension
+                            else -> continue
+                        }
+                        map.getOrPut(name) { LinkedHashSet() } += pkg
+                    }
+                }
+            }
+            CachedValueProvider.Result.create(map.mapValues { it.value.sorted() },
+                VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS, ProjectRootModificationTracker.getInstance(project))
+        }
     fun rootPackages(project: Project): Set<String> = index(project).keys.map { it.substringBefore('.') }.toSet()
 
     fun members(project: Project, pkg: String): List<Member> {

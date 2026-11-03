@@ -16,7 +16,8 @@
           attributes, types, validators, package members; return types of methods such as singletons</li>
       <li>Inspections: unused variables, functions and imports, unreachable code; MATLAB's own code analyzer
           (mlint) when MATLAB is installed</li>
-      <li>Run scripts or single <code>%%</code> sections with MATLAB or GNU Octave, from the gutter</li>
+      <li>A MATLAB console that keeps running between runs: run scripts, sections or the selection in it, from the gutter</li>
+      <li>Automatic imports for package members, Optimize Imports</li>
       <li>Reformat Code, parameter info with types and defaults from <code>arguments</code> blocks</li>
       <li>MATLAB path: folders outside the project and MATLAB's own toolbox code resolve and complete</li>
       <li>Go to definition into Python (<code>py.mod.func</code>), Java classes, MEX sources and C libraries
@@ -31,6 +32,16 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.2.0</p>
+    <ul>
+      <li>MATLAB console: runs go to a MATLAB session in the MATLAB tool window that keeps running, so later runs start
+          instantly and variables are kept; type commands there, interrupt, open more sessions;
+          Run Selection in MATLAB Console (Alt+Shift+E)</li>
+      <li>Automatic imports for package members: import or qualify fixes, completion that adds the import,
+          Optimize Imports</li>
+      <li>The original file icon for .m files; a red-orange plugin logo</li>
+      <li>A warning when the original Matlab Support plugin is enabled too</li>
+    </ul>
     <p>1.1.0</p>
     <ul>
       <li>MATLAB path: folders outside the project and, optionally, MATLAB's own toolbox code resolve and complete</li>
@@ -154,6 +165,9 @@
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedImportInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnresolvedImport" displayName="Unresolved import" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnresolvedImportInspection"/>
+        <localInspection language="Matlab" shortName="MatlabUnimportedPackageMember" displayName="Package member used without import" groupName="Matlab" enabledByDefault="true" level="WARNING"
+                         implementationClass="com.github.kornilova203.matlab.imports.MatlabUnimportedPackageMemberInspection"/>
+        <lang.importOptimizer language="Matlab" implementationClass="com.github.kornilova203.matlab.imports.MatlabImportOptimizer"/>
         <iconProvider implementation="com.github.kornilova203.matlab.MatlabFolderIconProvider" order="first"/>
         <localInspection language="Matlab" shortName="MatlabUnusedFunction" displayName="Unused function or private method" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedFunctionInspection"/>
@@ -170,7 +184,23 @@
             <className>com.github.kornilova203.matlab.editor.MatlabCreateLocalFunctionIntention</className>
             <category>MATLAB</category>
         </intentionAction>
+        <notificationGroup id="MATLAB" displayType="BALLOON"/>
+        <toolWindow id="MATLAB" anchor="bottom" icon="/icons/matlab.svg" canCloseContents="true"
+                    factoryClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleToolWindowFactory"/>
+        <postStartupActivity implementation="com.github.kornilova203.matlab.MatlabConflictCheck"/>
         <highlightUsagesHandlerFactory implementation="com.github.kornilova203.matlab.highlighting.MatlabBlockKeywordHighlighterFactory"/>
         
     </extensions>
+    <actions>
+        <action id="Matlab.NewConsole" class="com.github.kornilova203.matlab.execution.console.MatlabNewConsoleAction"
+                text="New MATLAB Console" description="Start another MATLAB session in the MATLAB tool window"
+                icon="AllIcons.General.Add">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="Matlab.RunSelection" class="com.github.kornilova203.matlab.execution.console.MatlabRunSelectionAction"
+                text="Run Selection in MATLAB Console" description="Run the selected code, or the current line, in the MATLAB console">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+    </actions>
 </idea-plugin>

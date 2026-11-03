@@ -35,11 +35,16 @@ object MatlabInstallations {
     }
 
     /** The MATLAB installation folder (matlabroot) of the interpreter that would run scripts; null for Octave. */
-    fun findMatlabRoot(): File? {
-        val interpreter = resolveInterpreter(null) ?: return null
+    fun findMatlabRoot(): File? = resolveInterpreter(null)?.let(::matlabRootOf)
+
+    /** matlabroot of the MATLAB executable [interpreter] (<matlabroot>/bin/matlab); null for Octave. */
+    fun matlabRootOf(interpreter: String): File? {
         val bin = binFolder(interpreter) ?: return null
         return bin.parentFile?.takeIf { File(it, "toolbox").isDirectory }
     }
+
+    /** Whether [interpreter] is GNU Octave rather than MATLAB. */
+    fun isOctave(interpreter: String): Boolean = File(interpreter).name.lowercase().contains("octave")
 
     // bin/matlab may be a symlink, e.g. /usr/local/bin/matlab -> /usr/local/MATLAB/R2025b/bin/matlab
     private fun binFolder(interpreter: String): File? =
