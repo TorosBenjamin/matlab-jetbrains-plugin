@@ -32,7 +32,14 @@ class MatlabSettings : SimplePersistentStateComponent<MatlabSettings.State>(Stat
 
         /** Index `<matlabroot>/toolbox/matlab`, so MATLAB's own functions open in the editor. */
         var indexMatlabToolbox by property(false)
+
+        /** The console's MATLAB stops in the debugger when an error isn't caught (`dbstop if error`). */
+        var pauseOnErrors by property(false)
     }
+
+    var pauseOnErrors: Boolean
+        get() = state.pauseOnErrors
+        set(value) { state.pauseOnErrors = value }
 
     var indexMatlabToolbox: Boolean
         get() = state.indexMatlabToolbox

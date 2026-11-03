@@ -82,6 +82,9 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
         return session
     }
 
+    /** Pause on Errors changed: every session gets it. */
+    fun breakpointsChanged() = sessions.forEach { it.breakpointsChanged() }
+
     private fun notifyError(message: String) {
         NotificationGroupManager.getInstance().getNotificationGroup("MATLAB")
             .createNotification(message, NotificationType.ERROR).notify(project)
@@ -133,6 +136,24 @@ object MatlabConsoleCode {
      */
     fun membersQuery(id: Int, expression: String): String =
         hiddenCall("ide_members__('$id', '${quote(expression)}')", "m$id")
+
+    /**
+     * The hidden command that makes MATLAB's breakpoints exactly [breakpoints] (and `dbstop if error` if
+     * [pauseOnErrors]); answered under `bp` with the ones MATLAB refused, one a line: file, line, message.
+     */
+    fun breakpointsQuery(breakpoints: List<MatlabBreakpointSpec>, pauseOnErrors: Boolean): String {
+        val list = File(scriptDirectory, "ide_breakpoints_" + ++breakpointLists + ".txt")
+        list.writeText(breakpoints.joinToString("") { it.toLine() })
+        return hiddenCall("ide_breakpoints__('${quote(list.path)}', ${if (pauseOnErrors) "true" else "false"})", BREAKPOINTS_TAG)
+    }
+    private var breakpointLists = 0
+
+    /** The call stack while MATLAB is stopped in the debugger, under `st`: file, function, line; innermost first. */
+    fun stackQuery(): String = hiddenCall("ide_stack__", STACK_TAG)
+
+    /** Evaluates [expression] where MATLAB is stopped (or in the workspace), under `e<id>`: class and size, then the value. */
+    fun evalQuery(id: Int, expression: String): String =
+        hiddenCall("ide_eval__('$id', '${quote(expression.replace('\n', ' '))}')", "e$id")
 
     /** Calls a helper function, putting their folder on the path if needed; on error the answer is empty. */
     private fun hiddenCall(call: String, tag: String): String {
@@ -232,8 +253,83 @@ object MatlabConsoleCode {
         end
         """.trimIndent() + "\n"
 
+    private val BREAKPOINTS_FUNCTION = """
+        function ide_breakpoints__(listFile, pauseOnErrors)
+        % Written by the IDE's MATLAB plugin: sets the IDE's breakpoints (file, line, condition; one a line)
+        out = '';
+        try
+            evalc('dbclear all');
+            octave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+            lines = regexp(fileread(listFile), '\n', 'split');
+            for k = 1:numel(lines)
+                parts = regexp(lines{k}, '\t', 'split');
+                if numel(parts) < 2 || isempty(parts{1})
+                    continue
+                end
+                where = parts{1};
+                if octave
+                    [~, where] = fileparts(where);
+                end
+                try
+                    if numel(parts) >= 3 && ~isempty(parts{3})
+                        evalc('dbstop(''in'', where, ''at'', parts{2}, ''if'', parts{3})');
+                    else
+                        evalc('dbstop(''in'', where, ''at'', parts{2})');
+                    end
+                catch err
+                    out = [out, parts{1}, char(9), parts{2}, char(9), regexprep(err.message, '\s+', ' '), char(10)]; %#ok<AGROW>
+                end
+            end
+            if pauseOnErrors
+                evalc('dbstop if error');
+            end
+        catch err
+            out = [out, char(9), char(9), regexprep(err.message, '\s+', ' '), char(10)];
+        end
+        fprintf('%sbp\n%s%s', char(2), out, char(4));
+        end
+        """.trimIndent() + "\n"
+
+    private val STACK_FUNCTION = """
+        function ide_stack__()
+        % Written by the IDE's MATLAB plugin: where MATLAB is stopped, for the IDE's debugger
+        out = '';
+        try
+            s = dbstack('-completenames');
+            for k = 2:numel(s)
+                out = [out, s(k).file, char(9), s(k).name, char(9), sprintf('%d', s(k).line), char(10)]; %#ok<AGROW>
+            end
+        catch
+        end
+        fprintf('%sst\n%s%s', char(2), out, char(4));
+        end
+        """.trimIndent() + "\n"
+
+    private val EVAL_FUNCTION = """
+        function ide_eval__(id, expression)
+        % Written by the IDE's MATLAB plugin: evaluates an expression for the IDE's debugger
+        try
+            value = evalin('caller', expression);
+            sz = size(value);
+            text = strtrim(evalc('disp(value)'));
+            if numel(text) > 20000
+                text = [text(1:20000), '...'];
+            end
+            out = [class(value), char(9), sprintf('%d', sz(1)), sprintf('x%d', sz(2:end)), char(10), text];
+        catch err
+            out = ['error', char(9), char(10), err.message];
+        end
+        fprintf('%se%s\n%s%s', char(2), id, out, char(4));
+        end
+        """.trimIndent() + "\n"
+
     const val WORKSPACE_TAG = "ws"
-    private val HELPERS by lazy { listOf("ide_workspace__" to WORKSPACE_FUNCTION, "ide_members__" to MEMBERS_FUNCTION) }
+    const val BREAKPOINTS_TAG = "bp"
+    const val STACK_TAG = "st"
+    private val HELPERS by lazy {
+        listOf("ide_workspace__" to WORKSPACE_FUNCTION, "ide_members__" to MEMBERS_FUNCTION,
+            "ide_breakpoints__" to BREAKPOINTS_FUNCTION, "ide_stack__" to STACK_FUNCTION, "ide_eval__" to EVAL_FUNCTION)
+    }
 }
 
 /** A session's tab: its console with a toolbar, and its variables on the right. */
@@ -249,6 +345,7 @@ class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleTool
         val group = DefaultActionGroup()
         group.add(InterruptAction())
         group.add(ActionManager.getInstance().getAction(NEW_CONSOLE_ACTION))
+        group.add(PauseOnErrorsAction())
         group.addSeparator()
         group.addAll(*session.console.createConsoleActions())
         val toolbar = ActionManager.getInstance().createActionToolbar("MatlabConsole", group, false)
@@ -268,6 +365,18 @@ class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleTool
                     .createNotification("This MATLAB can't be interrupted; close the tab to stop it.", NotificationType.WARNING)
                     .notify(session.project)
             }
+        }
+    }
+
+    /** `dbstop if error`: MATLAB stops in the debugger where an error isn't caught. */
+    private inner class PauseOnErrorsAction : com.intellij.openapi.actionSystem.ToggleAction(
+        "Pause on Errors", "Stop in the debugger where an error isn't caught (dbstop if error)",
+        AllIcons.Debugger.Db_exception_breakpoint), DumbAware {
+        override fun getActionUpdateThread() = com.intellij.openapi.actionSystem.ActionUpdateThread.BGT
+        override fun isSelected(e: AnActionEvent) = com.github.kornilova203.matlab.settings.MatlabSettings.getInstance().pauseOnErrors
+        override fun setSelected(e: AnActionEvent, state: Boolean) {
+            com.github.kornilova203.matlab.settings.MatlabSettings.getInstance().pauseOnErrors = state
+            MatlabConsoleManager.getInstance(session.project).breakpointsChanged()
         }
     }
 

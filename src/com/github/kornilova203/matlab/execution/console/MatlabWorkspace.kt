@@ -36,8 +36,13 @@ class MatlabWorkspace {
         val KEY = Key.create<MatlabWorkspace>("matlab.console.workspace")
 
         /** The workspace of [file] if it's a console's input. */
-        fun of(file: PsiFile?): MatlabWorkspace? =
-            file?.originalFile?.virtualFile?.getUserData(KEY) ?: file?.virtualFile?.getUserData(KEY)
+        fun of(file: PsiFile?): MatlabWorkspace? {
+            if (file == null) return null
+            // Through the view provider too: a code fragment (Evaluate Expression) has no virtualFile
+            return listOf(file.originalFile, file).firstNotNullOfOrNull {
+                it.virtualFile?.getUserData(KEY) ?: it.viewProvider.virtualFile.getUserData(KEY)
+            }
+        }
 
         /** Parses what `ide_workspace__` prints between the markers: name, size, class, value; one variable a line. */
         fun parse(text: String): List<MatlabVariable> = text.lineSequence()
@@ -175,7 +180,10 @@ class MatlabOutputFilter(private val onHidden: (tag: String, text: String) -> Un
     companion object {
         const val BEGIN = '\u0002'
         const val END = '\u0004'
-        val PROMPTS = listOf(">> ", "K>> ")
+        /** MATLAB's prompt, its debugger's, and Octave's debugger's. */
+        val PROMPTS = listOf(">> ", "K>> ", "debug> ")
+
+        fun isDebugPrompt(prompt: String) = prompt != PROMPTS[0]
         private const val MAX_HIDDEN = 2_000_000
     }
 }

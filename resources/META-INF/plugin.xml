@@ -124,6 +124,7 @@
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabLibraryFunctionCompletionContributor"/>
         <completion.contributor language="Matlab"
                                 implementationClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleCompletionContributor"/>
+        <xdebugger.breakpointType implementation="com.github.kornilova203.matlab.execution.debugger.MatlabLineBreakpointType"/>
         <lang.inspectionSuppressor language="Matlab"
                                    implementationClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleInspectionSuppressor"/>
         <lang.findUsagesProvider language="Matlab"
