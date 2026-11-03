@@ -154,6 +154,9 @@
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedImportInspection"/>
         <localInspection language="Matlab" shortName="MatlabUnresolvedImport" displayName="Unresolved import" groupName="Matlab" enabledByDefault="true" level="WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnresolvedImportInspection"/>
+        <localInspection language="Matlab" shortName="MatlabUnimportedPackageMember" displayName="Package member used without import" groupName="Matlab" enabledByDefault="true" level="WARNING"
+                         implementationClass="com.github.kornilova203.matlab.imports.MatlabUnimportedPackageMemberInspection"/>
+        <lang.importOptimizer language="Matlab" implementationClass="com.github.kornilova203.matlab.imports.MatlabImportOptimizer"/>
         <iconProvider implementation="com.github.kornilova203.matlab.MatlabFolderIconProvider" order="first"/>
         <localInspection language="Matlab" shortName="MatlabUnusedFunction" displayName="Unused function or private method" groupName="Matlab" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="com.github.kornilova203.matlab.inspections.MatlabUnusedFunctionInspection"/>

@@ -1,16 +1,14 @@
 package com.github.kornilova203.matlab.inspections
 
+import com.github.kornilova203.matlab.imports.MatlabImports
 import com.github.kornilova203.matlab.psi.MatlabCommandStatement
+import com.github.kornilova203.matlab.psi.MatlabPackages
 import com.github.kornilova203.matlab.psi.MatlabFunctionDeclaration
 import com.github.kornilova203.matlab.psi.MatlabTypes
-import com.github.kornilova203.matlab.psi.deleteExpr
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 
 /** Removes [name] from `import a.b c.*`, or the whole statement if it's the only name. */
@@ -20,22 +18,7 @@ class RemoveImportFix(statement: MatlabCommandStatement, private val name: Strin
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val statement = startElement as? MatlabCommandStatement ?: return
-        val arguments = statement.commandArguments
-        val text = arguments.text
-        val match = Regex("(^|\\s)(${Regex.escape(name)})(?=$|[\\s,;])").find(text) ?: return
-        val start = match.groups[2]!!.range.first
-        val others = Regex("[^\\s,;%]+").findAll(text.substringBefore('%')).count() > 1
-        if (!others) {
-            removeStatement(statement)
-            return
-        }
-        // The name and the whitespace after it, or before it if it's the last one
-        var end = start + name.length
-        var from = start
-        val after = text.substring(end).takeWhile { it == ' ' || it == '\t' }.length
-        if (after > 0 && end + after < text.length && text[end + after] !in ";,%") end += after
-        else from = start - text.substring(0, start).reversed().takeWhile { it == ' ' || it == '\t' }.length
-        ElementManipulators.handleContentChange(arguments, TextRange(from, end), "")
+        MatlabImports.setImportNames(statement, MatlabPackages.importArguments(statement).filter { it != name })
     }
 }
 
@@ -63,9 +46,4 @@ class RemoveUnreachableCodeFix(element: PsiElement) : LocalQuickFixOnPsiElement(
     }
 }
 
-/** Deletes [element] with its `;`, the line break after it, and the indentation before it. */
-private fun removeStatement(element: PsiElement) {
-    val indent = element.prevSibling as? PsiWhiteSpace
-    deleteExpr(element)
-    if (indent != null && indent.isValid && !indent.textContains('\n')) indent.delete()
-}
+private fun removeStatement(element: PsiElement) = MatlabImports.removeStatement(element)
