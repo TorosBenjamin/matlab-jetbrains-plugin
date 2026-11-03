@@ -125,11 +125,24 @@ object MatlabConsoleCode {
      * the variables between [MatlabOutputFilter.BEGIN] and [MatlabOutputFilter.END]. The first time, its folder
      * is put on the path. Errors are swallowed, so nothing of it shows in the console.
      */
-    fun workspaceQuery(): String {
-        val function = File(scriptDirectory, "ide_workspace__.m")
-        if (!function.isFile) function.writeText(WORKSPACE_FUNCTION)
-        return "try, ide_workspace__; catch, try, addpath('${quote(scriptDirectory.path)}'); ide_workspace__; " +
-                "catch, fprintf('%s', char([2 4])); end, end"
+    fun workspaceQuery(): String = hiddenCall("ide_workspace__", WORKSPACE_TAG)
+
+    /**
+     * The hidden command that lists the fields, properties and methods of [expression] (a variable, maybe with
+     * fields and indexes: `s.data(2)`), answered under the tag `m<id>`.
+     */
+    fun membersQuery(id: Int, expression: String): String =
+        hiddenCall("ide_members__('$id', '${quote(expression)}')", "m$id")
+
+    /** Calls a helper function, putting their folder on the path if needed; on error the answer is empty. */
+    private fun hiddenCall(call: String, tag: String): String {
+        val directory = scriptDirectory
+        for ((name, code) in HELPERS) {
+            val file = File(directory, "$name.m")
+            if (!file.isFile) file.writeText(code)
+        }
+        return "try, $call; catch, try, addpath('${quote(directory.path)}'); $call; " +
+                "catch, fprintf('%s$tag\\n%s', char(2), char(4)); end, end"
     }
 
     private fun quote(text: String) = text.replace("'", "''")
@@ -155,7 +168,7 @@ object MatlabConsoleCode {
             end
         catch
         end
-        fprintf('%s%s%s', char(2), out, char(4));
+        fprintf('%sws\n%s%s', char(2), out, char(4));
         end
 
         function s = ide_value__(x)
@@ -173,12 +186,61 @@ object MatlabConsoleCode {
         end
         end
         """.trimIndent() + "\n"
+
+    // Struct fields, table variables, object properties and methods
+    private val MEMBERS_FUNCTION = """
+        function ide_members__(id, expression)
+        % Written by the IDE's MATLAB plugin: lists what can follow a dot, for completion
+        out = '';
+        try
+            x = evalin('caller', expression);
+            names = {};
+            kinds = {};
+            if isstruct(x)
+                f = fieldnames(x);
+                names = [names; f(:)];
+                kinds = [kinds; repmat({'f'}, numel(f), 1)];
+            end
+            try
+                if istable(x) || istimetable(x)
+                    f = [x.Properties.VariableNames(:); {'Properties'}];
+                    names = [names; f];
+                    kinds = [kinds; repmat({'f'}, numel(f), 1)];
+                end
+            catch
+            end
+            if isobject(x) || isjava(x)
+                try
+                    p = properties(x);
+                    names = [names; p(:)];
+                    kinds = [kinds; repmat({'p'}, numel(p), 1)];
+                catch
+                end
+                try
+                    m = methods(x);
+                    names = [names; m(:)];
+                    kinds = [kinds; repmat({'m'}, numel(m), 1)];
+                catch
+                end
+            end
+            for k = 1:numel(names)
+                out = [out, kinds{k}, char(9), names{k}, char(10)]; %#ok<AGROW>
+            end
+        catch
+        end
+        fprintf('%sm%s\n%s%s', char(2), id, out, char(4));
+        end
+        """.trimIndent() + "\n"
+
+    const val WORKSPACE_TAG = "ws"
+    private val HELPERS by lazy { listOf("ide_workspace__" to WORKSPACE_FUNCTION, "ide_members__" to MEMBERS_FUNCTION) }
 }
 
 /** A session's tab: its console with a toolbar, and its variables on the right. */
 class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleToolWindowPanel(false, true) {
     init {
-        val splitter = com.intellij.ui.JBSplitter(false, "matlab.console.variables", 0.7f)
+        // The thin splitter tool windows use, rather than a raised bar
+        val splitter = com.intellij.ui.OnePixelSplitter(false, "matlab.console.variables", 0.7f)
         splitter.firstComponent = session.console.component
         splitter.secondComponent = MatlabVariablesView(session)
         setContent(splitter)

@@ -9,39 +9,60 @@ import java.io.File
 import java.nio.file.Files
 
 class MatlabWorkspaceTest : BasePlatformTestCase() {
-    private val listings = ArrayList<String>()
-    private var prompts = 0
-    private val filter = MatlabOutputFilter({ listings += it }, { prompts++ })
+    private val hidden = ArrayList<Pair<String, String>>()
+    private val prompts = ArrayList<String>()
+    private val filter = MatlabOutputFilter({ tag, text -> hidden += tag to text }, { prompts += it })
 
-    fun testPlainOutputIsShown() {
-        assertEquals("x =\n     1\n>> ", filter.feed("x =\n     1\n>> "))
-        assertEquals(1, prompts)
-        assertEmpty(listings)
+    fun testPromptIsTakenOut() {
+        assertEquals("x =\n     1\n", filter.feed("x =\n     1\n>> "))
+        assertEquals(listOf(">> "), prompts)
+        assertEmpty(hidden)
     }
 
-    fun testListingIsHiddenWithItsPrompt() {
-        assertEquals("", filter.feed("\u0002a\t1x1\tdouble\t1\n\u0004>> "))
-        assertEquals(listOf("a\t1x1\tdouble\t1\n"), listings)
-        assertEquals(0, prompts)
-        assertEquals("ans = 2\n>> ", filter.feed("ans = 2\n>> "))
-        assertEquals(1, prompts)
+    fun testAnswerIsHiddenWithItsPrompt() {
+        assertEquals("", filter.feed("\u0002ws\na\t1x1\tdouble\t1\n\u0004>> "))
+        assertEquals(listOf("ws" to "a\t1x1\tdouble\t1\n"), hidden)
+        assertEmpty(prompts)
+        assertEquals("ans = 2\n", filter.feed("ans = 2\n>> "))
+        assertEquals(listOf(">> "), prompts)
     }
 
-    fun testListingInPieces() {
-        assertEquals("out\n", filter.feed("out\n\u0002a\t1x"))
+    fun testAnswerInPieces() {
+        assertEquals("out\n", filter.feed("out\n\u0002ws\na\t1x"))
         assertEquals("", filter.feed("1\tdouble\t"))
         assertEquals("", filter.feed("\n\u0004"))
         assertEquals("", filter.feed(">> "))
-        assertEquals(listOf("a\t1x1\tdouble\t\n"), listings)
+        assertEquals(listOf("ws" to "a\t1x1\tdouble\t\n"), hidden)
+        assertEmpty(prompts)
         assertEquals("b\n", filter.feed("b\n"))
     }
 
     fun testPromptInPieces() {
-        filter.feed("done\n>")
-        assertEquals(0, prompts)
-        filter.feed("> ")
-        assertEquals(1, prompts)
+        assertEquals("done\n", filter.feed("done\n>"))
+        assertEmpty(prompts)
+        assertEquals("", filter.feed("> "))
+        assertEquals(listOf(">> "), prompts)
     }
+
+    fun testDebuggerPrompt() {
+        assertEquals("5   x = 1;\n", filter.feed("5   x = 1;\nK>> "))
+        assertEquals(listOf("K>> "), prompts)
+    }
+
+    fun testPromptAfterOutputOnTheSameLine() {
+        assertEquals("abc\n", filter.feed("abc>> "))
+        assertEquals(listOf(">> "), prompts)
+    }
+
+    fun testOtherAnglesStay() {
+        assertEquals("a >> b\n>x\n", filter.feed("a >> b\n>x\n"))
+        assertEmpty(prompts)
+    }
+
+    fun testParseMembers() = assertEquals(
+        listOf(MatlabMember("a", MatlabMember.Kind.FIELD), MatlabMember("Name", MatlabMember.Kind.PROPERTY),
+            MatlabMember("disp", MatlabMember.Kind.METHOD)),
+        MatlabMember.parse("f\ta\np\tName\r\nm\tdisp\nm\tName\nx\tjunk\n"))
 
     fun testParse() {
         val variables = MatlabWorkspace.parse("zeta\t3x4\tdouble\t\nalpha\t1x1\tdouble\t5\r\n\nname\t1x5\tchar\t'hello'\n")
@@ -56,7 +77,10 @@ class MatlabWorkspaceTest : BasePlatformTestCase() {
         val dir = Regex("addpath\\('(.*?)'\\)").find(query)!!.groupValues[1].replace("''", "'")
         val function = File(dir, "ide_workspace__.m").readText()
         assertTrue(function.startsWith("function ide_workspace__()"))
-        assertTrue(function.contains("fprintf('%s%s%s', char(2), out, char(4));"))
+        assertTrue(function.contains("fprintf('%sws\\n%s%s', char(2), out, char(4));"))
+        val members = MatlabConsoleCode.membersQuery(3, "s.a")
+        assertTrue(members, members.contains("ide_members__('3', 's.a')"))
+        assertTrue(File(dir, "ide_members__.m").readText().startsWith("function ide_members__(id, expression)"))
     }
 
     private fun consoleFile(text: String, vararg variables: MatlabVariable): MatlabWorkspace {
@@ -73,6 +97,23 @@ class MatlabWorkspaceTest : BasePlatformTestCase() {
         val names = myFixture.lookupElementStrings!!
         assertTrue(names.toString(), names.containsAll(listOf("myData", "myName")))
         assertFalse(names.contains("other"))
+    }
+
+    fun testCompletesMembersAfterDot() {
+        val workspace = consoleFile("y = s.<caret>", MatlabVariable("s", "1x1", "struct", ""))
+        val asked = ArrayList<String>()
+        workspace.members = { asked += it; listOf(MatlabMember("alpha", MatlabMember.Kind.FIELD), MatlabMember("beta", MatlabMember.Kind.FIELD)) }
+        myFixture.completeBasic()
+        assertTrue(myFixture.lookupElementStrings.toString(), myFixture.lookupElementStrings!!.containsAll(listOf("alpha", "beta")))
+        assertEquals(listOf("s"), asked)
+    }
+
+    fun testNoMembersOfFunctionCalls() {
+        val workspace = consoleFile("y = f(x).<caret>", MatlabVariable("x", "1x1", "double", "1"))
+        val asked = ArrayList<String>()
+        workspace.members = { asked += it; emptyList() }
+        myFixture.completeBasic()
+        assertEmpty(asked)
     }
 
     fun testNoVariablesAfterDot() {
@@ -97,7 +138,10 @@ class MatlabWorkspaceTest : BasePlatformTestCase() {
             printf '>> '
             while IFS= read -r line; do
               case "${'$'}line" in
-                try,*ide_workspace__*) printf '\002x\0111x1\011double\0115\n\004>> ' ;;
+                try,*ide_workspace__*) printf '\002ws\nx\0111x1\011double\0115\n\004>> ' ;;
+                try,*ide_members__*)
+                  id=${'$'}(printf '%s' "${'$'}line" | sed -n "s/.*ide_members__('\([0-9]*\)'.*/\1/p")
+                  printf '\002m%s\nf\011field1\nm\011disp\n\004>> ' "${'$'}id" ;;
                 exit) exit 0 ;;
                 *) printf 'ran %s\n>> ' "${'$'}line" ;;
               esac
@@ -109,6 +153,8 @@ class MatlabWorkspaceTest : BasePlatformTestCase() {
         val deadline = System.currentTimeMillis() + 10_000
         while (session.workspace.variables.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(50)
         assertEquals(listOf(MatlabVariable("x", "1x1", "double", "5")), session.workspace.variables)
+        assertEquals(listOf(MatlabMember("field1", MatlabMember.Kind.FIELD), MatlabMember("disp", MatlabMember.Kind.METHOD)),
+            session.members("x"))
         // Listed again after a command
         var updates = 0
         session.workspace.addListener { updates++ }

@@ -31,9 +31,20 @@ class MatlabVariablesView(private val session: MatlabConsoleSession) : JPanel(Bo
     init {
         table.emptyText.text = "No variables"
         table.setShowGrid(false)
-        table.autoResizeMode = JTable.AUTO_RESIZE_LAST_COLUMN
-        table.columnModel.getColumn(0).cellRenderer = NameRenderer()
-        add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER)
+        table.setStriped(true)
+        table.intercellSpacing = java.awt.Dimension(0, 0)
+        table.autoResizeMode = JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS
+        table.tableHeader.reorderingAllowed = false
+        table.columnModel.getColumn(0).cellRenderer = TextRenderer(AllIcons.Nodes.Variable, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        table.columnModel.getColumn(1).cellRenderer = TextRenderer(null, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        table.columnModel.getColumn(2).cellRenderer = TextRenderer(null, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        table.columnModel.getColumn(3).cellRenderer = TextRenderer(null, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        // Value gets the room; size and class are short
+        for ((column, width) in listOf(0 to 110, 1 to 220, 2 to 60, 3 to 70)) {
+            table.columnModel.getColumn(column).preferredWidth = com.intellij.util.ui.JBUI.scale(width)
+        }
+        // No border: the tool window draws the edges
+        add(ScrollPaneFactory.createScrollPane(table, true), BorderLayout.CENTER)
         object : DoubleClickListener() {
             override fun onDoubleClick(event: MouseEvent): Boolean {
                 val row = table.selectedRow.takeIf { it >= 0 } ?: return false
@@ -56,10 +67,11 @@ class MatlabVariablesView(private val session: MatlabConsoleSession) : JPanel(Bo
         if (index >= 0) table.selectionModel.setSelectionInterval(index, index)
     }
 
-    private class NameRenderer : ColoredTableCellRenderer() {
+    private class TextRenderer(private val cellIcon: javax.swing.Icon?, private val attributes: SimpleTextAttributes) :
+        ColoredTableCellRenderer() {
         override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-            icon = AllIcons.Nodes.Variable
-            append(value?.toString() ?: "", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            icon = cellIcon
+            append(value?.toString() ?: "", attributes)
         }
     }
 

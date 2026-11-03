@@ -46,6 +46,16 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     @Volatile
     private var workspaceChanged = true
 
+    /** MATLAB is at its prompt, waiting for a command (so hidden queries are answered right away). */
+    @Volatile
+    var isIdle = false
+        private set
+
+    private val queryIds = java.util.concurrent.atomic.AtomicInteger()
+    private val memberAnswers = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.CompletableFuture<String>>()
+    /** Members by expression, for the current workspace; cleared when it changes. */
+    private val memberCache = java.util.concurrent.ConcurrentHashMap<String, List<MatlabMember>>()
+
     /** Output above, a MATLAB input line below it, with completion and history (up and down). */
     val console: LanguageConsoleView = LanguageConsoleBuilder()
         .executionEnabled { isAlive }
@@ -56,16 +66,26 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
 
     init {
         Disposer.register(this, console)
-        // MATLAB prints its own ">> " prompt in the output
-        console.prompt = ""
+        // MATLAB's own prompts are taken out of the output; the input line shows the current one
+        console.prompt = MatlabOutputFilter.PROMPTS[0]
         console.virtualFile.putUserData(MatlabWorkspace.KEY, workspace)
+        workspace.members = { expression -> members(expression) }
         val commandLine = commandLine(kind, interpreter, workingDirectory)
         // Not the colored handler: its escape-code decoding mustn't touch the workspace markers
         processHandler = KillableProcessHandler(commandLine)
         ProcessTerminatedListener.attach(processHandler, project, "\n$name exited with code \$EXIT_CODE$\n")
         val filter = MatlabOutputFilter(
-            onWorkspace = { workspace.update(MatlabWorkspace.parse(it)) },
-            onPrompt = {
+            onHidden = { tag, text ->
+                if (tag == MatlabConsoleCode.WORKSPACE_TAG) {
+                    memberCache.clear()
+                    workspace.update(MatlabWorkspace.parse(text))
+                } else {
+                    memberAnswers.remove(tag)?.complete(text)
+                }
+            },
+            onPrompt = { prompt ->
+                isIdle = true
+                showPrompt(prompt)
                 if (workspaceChanged) {
                     workspaceChanged = false
                     try {
@@ -94,7 +114,7 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
      */
     fun send(command: String, code: String? = null) {
         if (callsClc(command) || code != null && callsClc(code)) clearConsole()
-        console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
+        console.print(console.prompt.orEmpty() + command + "\n", ConsoleViewContentType.USER_INPUT)
         execute(command)
     }
 
@@ -108,7 +128,55 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
 
     private fun execute(command: String) {
         workspaceChanged = true
+        isIdle = false
+        memberCache.clear()
         write(command)
+    }
+
+    /** `>> `, or `K>> ` while MATLAB is stopped in the debugger. */
+    private fun showPrompt(prompt: String) {
+        if (console.prompt == prompt) return
+        ApplicationManager.getApplication().invokeLater({ if (!disposed) console.prompt = prompt },
+            com.intellij.openapi.application.ModalityState.any())
+    }
+
+    /**
+     * The fields, properties and methods of [expression] (`s`, `s.data(2)`), asked from MATLAB. Empty if MATLAB
+     * is busy or doesn't answer within a second or two. Waits, so call it in the background (completion does).
+     */
+    fun members(expression: String): List<MatlabMember> {
+        memberCache[expression]?.let { return it }
+        if (!isAlive || !isIdle || !listsWorkspace) return emptyList()
+        val id = queryIds.incrementAndGet()
+        val answer = java.util.concurrent.CompletableFuture<String>()
+        memberAnswers["m$id"] = answer
+        try {
+            write(MatlabConsoleCode.membersQuery(id, expression))
+        } catch (e: java.io.IOException) {
+            memberAnswers.remove("m$id")
+            return emptyList()
+        }
+        val deadline = System.currentTimeMillis() + 2_000
+        while (!answer.isDone && System.currentTimeMillis() < deadline) {
+            // Typing cancels completion: don't hold it up
+            try {
+                com.intellij.openapi.progress.ProgressManager.checkCanceled()
+            } catch (e: com.intellij.openapi.progress.ProcessCanceledException) {
+                // The answer still comes and is dropped; keep it for the next try
+                answer.thenAccept { memberCache[expression] = MatlabMember.parse(it) }
+                throw e
+            }
+            try {
+                answer.get(20, java.util.concurrent.TimeUnit.MILLISECONDS)
+            } catch (e: java.util.concurrent.TimeoutException) {
+            }
+        }
+        val text = answer.getNow(null)
+        if (text == null) {
+            memberAnswers.remove("m$id")
+            return emptyList()
+        }
+        return MatlabMember.parse(text).also { memberCache[expression] = it }
     }
 
     /**
@@ -146,7 +214,11 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     }
 
     /** Ends MATLAB: asks it to exit (so MATLAB started by the engine closes too), then stops the process. */
+    @Volatile
+    private var disposed = false
+
     override fun dispose() {
+        disposed = true
         if (!isAlive) return
         write("exit")
         val handler = processHandler
