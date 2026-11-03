@@ -239,8 +239,10 @@ object MatlabConsoleCode {
 /** A session's tab: its console with a toolbar, and its variables on the right. */
 class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleToolWindowPanel(false, true) {
     init {
-        // The thin splitter tool windows use, rather than a raised bar
-        val splitter = com.intellij.ui.OnePixelSplitter(false, "matlab.console.variables", 0.7f)
+        // Console and variables on one surface: the divider has the console's color, so no dark line between them
+        val splitter = object : com.intellij.ui.OnePixelSplitter(false, "matlab.console.variables", 0.7f) {
+            override fun createDivider() = super.createDivider().also { it.background = MatlabVariablesView.BACKGROUND }
+        }
         splitter.firstComponent = session.console.component
         splitter.secondComponent = MatlabVariablesView(session)
         setContent(splitter)

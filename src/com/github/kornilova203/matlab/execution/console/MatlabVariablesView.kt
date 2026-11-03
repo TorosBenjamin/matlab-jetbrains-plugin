@@ -31,8 +31,10 @@ class MatlabVariablesView(private val session: MatlabConsoleSession) : JPanel(Bo
     init {
         table.emptyText.text = "No variables"
         table.setShowGrid(false)
-        table.setStriped(true)
+        table.setShowHorizontalLines(false)
+        table.setShowVerticalLines(false)
         table.intercellSpacing = java.awt.Dimension(0, 0)
+        table.background = BACKGROUND
         table.autoResizeMode = JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS
         table.tableHeader.reorderingAllowed = false
         table.columnModel.getColumn(0).cellRenderer = TextRenderer(AllIcons.Nodes.Variable, SimpleTextAttributes.REGULAR_ATTRIBUTES)
@@ -44,7 +46,9 @@ class MatlabVariablesView(private val session: MatlabConsoleSession) : JPanel(Bo
             table.columnModel.getColumn(column).preferredWidth = com.intellij.util.ui.JBUI.scale(width)
         }
         // No border: the tool window draws the edges
-        add(ScrollPaneFactory.createScrollPane(table, true), BorderLayout.CENTER)
+        val scrollPane = ScrollPaneFactory.createScrollPane(table, true)
+        scrollPane.viewport.background = BACKGROUND
+        add(scrollPane, BorderLayout.CENTER)
         object : DoubleClickListener() {
             override fun onDoubleClick(event: MouseEvent): Boolean {
                 val row = table.selectedRow.takeIf { it >= 0 } ?: return false
@@ -75,8 +79,14 @@ class MatlabVariablesView(private val session: MatlabConsoleSession) : JPanel(Bo
         }
     }
 
-    private companion object {
-        fun column(title: String, value: (MatlabVariable) -> String) = object : ColumnInfo<MatlabVariable, String>(title) {
+    companion object {
+        /** The console's background, so the variables look like part of it (and follow the color scheme). */
+        val BACKGROUND: java.awt.Color = com.intellij.ui.JBColor.lazy {
+            val scheme = com.intellij.openapi.editor.colors.EditorColorsManager.getInstance().globalScheme
+            scheme.getColor(com.intellij.execution.ui.ConsoleViewContentType.CONSOLE_BACKGROUND_KEY) ?: scheme.defaultBackground
+        }
+
+        private fun column(title: String, value: (MatlabVariable) -> String) = object : ColumnInfo<MatlabVariable, String>(title) {
             override fun valueOf(item: MatlabVariable): String = value(item)
         }
     }

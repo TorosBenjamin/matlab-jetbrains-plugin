@@ -3,8 +3,8 @@ package com.github.kornilova203.matlab.execution.console
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.github.kornilova203.matlab.MatlabLanguage
-import com.intellij.execution.console.BaseConsoleExecuteActionHandler
 import com.intellij.execution.console.LanguageConsoleBuilder
+import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
@@ -56,18 +56,26 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     /** Members by expression, for the current workspace; cleared when it changes. */
     private val memberCache = java.util.concurrent.ConcurrentHashMap<String, List<MatlabMember>>()
 
-    /** Output above, a MATLAB input line below it, with completion and history (up and down). */
-    val console: LanguageConsoleView = LanguageConsoleBuilder()
-        .executionEnabled { isAlive }
-        .initActions(object : BaseConsoleExecuteActionHandler(false) {
-            override fun execute(text: String, console: LanguageConsoleView) = typed(text)
-        }, "matlab")
-        .build(project, MatlabLanguage.INSTANCE)
+    /**
+     * Output above, a MATLAB input line below it, with completion and history (up and down). The plain console,
+     * not the builder's: that one adds a gutter with markers and lines between the commands.
+     */
+    val console: LanguageConsoleView = LanguageConsoleImpl(project, name, MatlabLanguage.INSTANCE)
+
+    /** The prompt MATLAB showed last: `>> `, or `K>> ` in the debugger. */
+    @Volatile
+    private var currentPrompt = MatlabOutputFilter.PROMPTS[0]
+    /** When MATLAB last printed something, to notice it waiting for an answer to input(). */
+    @Volatile
+    private var lastOutput = 0L
 
     init {
         Disposer.register(this, console)
+        LanguageConsoleBuilder.registerExecuteAction(console, { typed(it) }, "matlab", null) { isAlive }
         // MATLAB's own prompts are taken out of the output; the input line shows the current one
-        console.prompt = MatlabOutputFilter.PROMPTS[0]
+        console.prompt = currentPrompt
+        // Like MATLAB's command window: no prompt and no typing while MATLAB is busy, starting up included
+        if (listsWorkspace) console.isEditable = false
         console.virtualFile.putUserData(MatlabWorkspace.KEY, workspace)
         workspace.members = { expression -> members(expression) }
         val commandLine = commandLine(kind, interpreter, workingDirectory)
@@ -85,7 +93,8 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
             },
             onPrompt = { prompt ->
                 isIdle = true
-                showPrompt(prompt)
+                currentPrompt = prompt
+                showInput(prompt)
                 if (workspaceChanged) {
                     workspaceChanged = false
                     try {
@@ -100,7 +109,12 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
                 val type = ConsoleViewContentType.getConsoleViewType(outputType)
                 val shown = if (listsWorkspace && outputType != ProcessOutputTypes.SYSTEM && !ProcessOutputType.isStderr(outputType))
                     filter.feed(event.text) else event.text
-                if (shown.isNotEmpty()) console.print(shown, type)
+                if (shown.isNotEmpty()) {
+                    console.print(shown, type)
+                    val at = System.nanoTime()
+                    lastOutput = at
+                    if (listsWorkspace && !isIdle && !shown.endsWith('\n')) waitingForAnswer(at)
+                }
             }
         })
         processHandler.startNotify()
@@ -114,7 +128,8 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
      */
     fun send(command: String, code: String? = null) {
         if (callsClc(command) || code != null && callsClc(code)) clearConsole()
-        console.print(console.prompt.orEmpty() + command + "\n", ConsoleViewContentType.USER_INPUT)
+        console.print(currentPrompt, console.promptAttributes)
+        console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
         execute(command)
     }
 
@@ -129,15 +144,34 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     private fun execute(command: String) {
         workspaceChanged = true
         isIdle = false
+        if (listsWorkspace) onEdt { console.isEditable = false }
         memberCache.clear()
         write(command)
     }
 
-    /** `>> `, or `K>> ` while MATLAB is stopped in the debugger. */
-    private fun showPrompt(prompt: String) {
-        if (console.prompt == prompt) return
-        ApplicationManager.getApplication().invokeLater({ if (!disposed) console.prompt = prompt },
-            com.intellij.openapi.application.ModalityState.any())
+    /** Lets the user type again, after [prompt] (`>> `, or `K>> ` while MATLAB is stopped in the debugger). */
+    private fun showInput(prompt: String) = onEdt {
+        console.prompt = prompt
+        console.isEditable = true
+    }
+
+    /**
+     * Output that ends mid-line and then nothing more: MATLAB waits for an answer (`input('Name: ')`), so the
+     * input line opens, without a prompt (the question is the prompt).
+     */
+    private fun waitingForAnswer(at: Long) {
+        com.intellij.util.concurrency.AppExecutorUtil.getAppScheduledExecutorService().schedule({
+            if (lastOutput == at && !isIdle && isAlive) onEdt {
+                console.prompt = ""
+                console.isEditable = true
+            }
+        }, 400, java.util.concurrent.TimeUnit.MILLISECONDS)
+    }
+
+    private fun onEdt(action: () -> Unit) {
+        val application = ApplicationManager.getApplication()
+        val run = { if (!disposed) action() }
+        if (application.isDispatchThread) run() else application.invokeLater(run, com.intellij.openapi.application.ModalityState.any())
     }
 
     /**
@@ -183,7 +217,12 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
      * MATLAB's `clc` can't clear this console (it isn't MATLAB's command window), so the console is cleared
      * when a command or script calls it, before it runs.
      */
-    private fun clearConsole() = console.clear()
+    private fun clearConsole() {
+        console.clear()
+        // Keep the input line as it was (prompt and all)
+        val prompt = currentPrompt
+        onEdt { if (console.isEditable) console.prompt = prompt }
+    }
 
     @Synchronized
     private fun write(line: String) {
