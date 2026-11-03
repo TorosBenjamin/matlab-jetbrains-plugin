@@ -26,6 +26,9 @@ Liudmila Kornilova, published as a separate plugin. All credit for the original 
   console** that keeps running between runs, so variables are kept and later runs start instantly; more consoles with +
   in the MATLAB tool window or Tools | New MATLAB Console. The console's input line has completion (including
   workspace variables) and history, and the **Variables** view next to it shows the workspace
+- **Debugging**: breakpoints in the gutter are always on, as in MATLAB (no separate debug run). When MATLAB stops,
+  a debug tab shows the line, call stack and variables, with stepping (F8, F7, Shift+F8), Resume (F9), Evaluate
+  Expression and values on hover. Conditions and Pause on Errors (`dbstop if error`) work too
 - **Imports**: package members used without an import are reported, with fixes to import them or write the package
   name; completion adds the import; Code | Optimize Imports removes unused ones
 - **Editing**: Reformat Code, parameter info (Ctrl+P, with types and defaults from `arguments` blocks),
@@ -57,7 +60,13 @@ Right click a `.m` file, or click ▶ in the gutter next to a `%%` section or a 
 runs in the **MATLAB** tool window, in a MATLAB session that stays open: the next run reuses it, and you can type
 commands in the input line at its bottom (Enter runs, up and down go through earlier commands, completion offers
 functions and the variables in the workspace). The **Variables** view on the right lists the workspace after each
-command; double-click a variable to print it. `clc` clears the console. On Windows the console connects through MATLAB's Java Engine API (MATLAB R2016b or newer). To start a
+command; double-click a variable to print it. `clc` clears the console.
+
+Breakpoints (click the gutter) apply to every run and every command, as in MATLAB. When MATLAB stops at one, the
+debugger opens at that line; the Debug tool window steps and resumes (`dbstep`, `dbcont`), shows the call stack and
+the current function's variables, and evaluates expressions. **Pause on Errors** in the console's toolbar stops where
+an error isn't caught. Breakpoints in a section or selection that's run on its own don't stop, since that code runs as
+a copy. On Windows, where the console uses MATLAB's Java engine, breakpoints are experimental. On Windows the console connects through MATLAB's Java Engine API (MATLAB R2016b or newer). To start a
 new MATLAB for each run instead, uncheck *Run in the MATLAB console* in the run configuration.
 
 MATLAB is found automatically (on `PATH`, or in the standard install folders such as `/usr/local/MATLAB/R20xx`).

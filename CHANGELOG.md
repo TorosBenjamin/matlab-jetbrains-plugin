@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+- **Breakpoints**: click the gutter of a `.m` file. As in MATLAB they're always on, with no separate debug run: the console's MATLAB stops at them whenever the code runs. Conditions (`x > 5`) work, and **Pause on Errors** in the console toolbar stops where an error isn't caught (`dbstop if error`)
+- **Debugging**: when MATLAB stops, a debug tab opens with the current line, the call stack and the variables. Step Over (F8), Step Into (F7), Step Out (Shift+F8), Resume (F9), Run to Cursor and Stop work. Evaluate Expression (Alt+F8) and hovering a name show values. Commands can also be typed at `K>>` in the console
+- **Console**: completion after a dot (`s.`, `obj.`) offers the fields, properties and methods of what's in the workspace
+- **Console**: MATLAB's `>>` prompt is in the input line, which is locked while MATLAB is busy and opens for `input()` questions; plain look without lines between commands; the Variables view blends in with the console
+- On Windows, breakpoints are experimental: MATLAB's Java engine may not stop in the IDE
+
 ## 1.3.0
 
 - **Console input**: the MATLAB console has an input line with highlighting, completion (including the session's variables), parameter info and history (up and down). Multi-line input runs as one block
