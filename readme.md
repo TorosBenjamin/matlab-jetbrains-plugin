@@ -22,7 +22,11 @@ Liudmila Kornilova, published as a separate plugin. All credit for the original 
 - **Inspections**: unused variables, functions and imports, unreachable code, unresolved imports, and MATLAB's
   own code analyzer (mlint) when MATLAB is installed; quick fixes remove what's unused, suppress mlint warnings
   (`%#ok`) and create functions that are called but not defined
-- **Running** scripts or single `%%` sections with MATLAB or GNU Octave, from the gutter or the context menu
+- **Running** scripts, single `%%` sections or the selection (Alt+Shift+E) with MATLAB or GNU Octave, in a **MATLAB
+  console** that keeps running between runs, so variables are kept and later runs start instantly; more consoles with +
+  in the MATLAB tool window or Tools | New MATLAB Console
+- **Imports**: package members used without an import are reported, with fixes to import them or write the package
+  name; completion adds the import; Code | Optimize Imports removes unused ones
 - **Editing**: Reformat Code, parameter info (Ctrl+P, with types and defaults from `arguments` blocks),
   auto-inserted `end`, folding of `%%` sections, live templates (`for`, `if`, `fun`, `cls`, ...), Surround With,
   TODO and spell-checking
@@ -48,7 +52,10 @@ Uninstall the original *Matlab Support* plugin first; both handle `.m` files. In
 Objective-C, so the plugin conflicts there.
 
 ## Running MATLAB files
-Right click a `.m` file, or click ▶ in the gutter next to a `%%` section or a function file's main function.
+Right click a `.m` file, or click ▶ in the gutter next to a `%%` section or a function file's main function. The code
+runs in the **MATLAB** tool window, in a MATLAB session that stays open: the next run reuses it, and you can type
+commands there. On Windows the console connects through MATLAB's Java Engine API (MATLAB R2016b or newer). To start a
+new MATLAB for each run instead, uncheck *Run in the MATLAB console* in the run configuration.
 
 MATLAB is found automatically (on `PATH`, or in the standard install folders such as `/usr/local/MATLAB/R20xx`).
 To choose an installation, set its executable in **Settings | Languages & Frameworks | MATLAB**; a run

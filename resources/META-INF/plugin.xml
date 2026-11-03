@@ -16,7 +16,8 @@
           attributes, types, validators, package members; return types of methods such as singletons</li>
       <li>Inspections: unused variables, functions and imports, unreachable code; MATLAB's own code analyzer
           (mlint) when MATLAB is installed</li>
-      <li>Run scripts or single <code>%%</code> sections with MATLAB or GNU Octave, from the gutter</li>
+      <li>A MATLAB console that keeps running between runs: run scripts, sections or the selection in it, from the gutter</li>
+      <li>Automatic imports for package members, Optimize Imports</li>
       <li>Reformat Code, parameter info with types and defaults from <code>arguments</code> blocks</li>
       <li>MATLAB path: folders outside the project and MATLAB's own toolbox code resolve and complete</li>
       <li>Go to definition into Python (<code>py.mod.func</code>), Java classes, MEX sources and C libraries
@@ -31,6 +32,16 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.2.0</p>
+    <ul>
+      <li>MATLAB console: runs go to a MATLAB session in the MATLAB tool window that keeps running, so later runs start
+          instantly and variables are kept; type commands there, interrupt, open more sessions;
+          Run Selection in MATLAB Console (Alt+Shift+E)</li>
+      <li>Automatic imports for package members: import or qualify fixes, completion that adds the import,
+          Optimize Imports</li>
+      <li>The original file icon for .m files; a red-orange plugin logo</li>
+      <li>A warning when the original Matlab Support plugin is enabled too</li>
+    </ul>
     <p>1.1.0</p>
     <ul>
       <li>MATLAB path: folders outside the project and, optionally, MATLAB's own toolbox code resolve and complete</li>
