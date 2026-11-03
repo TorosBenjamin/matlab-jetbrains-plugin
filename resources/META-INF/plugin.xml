@@ -18,6 +18,7 @@
           (mlint) when MATLAB is installed</li>
       <li>A MATLAB console that keeps running between runs: run scripts, sections or the selection in it, from the gutter;
           an input line with completion, and the workspace's variables next to it</li>
+      <li>Breakpoints and debugging: always-on breakpoints, stepping, call stack, variables and Evaluate Expression</li>
       <li>Automatic imports for package members, Optimize Imports</li>
       <li>Reformat Code, parameter info with types and defaults from <code>arguments</code> blocks</li>
       <li>MATLAB path: folders outside the project and MATLAB's own toolbox code resolve and complete</li>
@@ -33,6 +34,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.4.0</p>
+    <ul>
+      <li>Breakpoints that are always on, as in MATLAB, with conditions and Pause on Errors; when MATLAB stops, a debug
+          tab with the line, call stack, variables, stepping, Evaluate Expression and values on hover</li>
+      <li>Console: completion after a dot from the live workspace; the prompt in the input line, locked while MATLAB is
+          busy; a cleaner look</li>
+    </ul>
     <p>1.3.0</p>
     <ul>
       <li>MATLAB console input with highlighting, completion of functions and workspace variables, parameter info and
@@ -124,6 +132,7 @@
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabLibraryFunctionCompletionContributor"/>
         <completion.contributor language="Matlab"
                                 implementationClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleCompletionContributor"/>
+        <xdebugger.breakpointType implementation="com.github.kornilova203.matlab.execution.debugger.MatlabLineBreakpointType"/>
         <lang.inspectionSuppressor language="Matlab"
                                    implementationClass="com.github.kornilova203.matlab.execution.console.MatlabConsoleInspectionSuppressor"/>
         <lang.findUsagesProvider language="Matlab"

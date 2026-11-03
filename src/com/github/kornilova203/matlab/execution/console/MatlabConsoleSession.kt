@@ -3,8 +3,8 @@ package com.github.kornilova203.matlab.execution.console
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.github.kornilova203.matlab.MatlabLanguage
-import com.intellij.execution.console.BaseConsoleExecuteActionHandler
 import com.intellij.execution.console.LanguageConsoleBuilder
+import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
@@ -22,6 +22,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
+import com.github.kornilova203.matlab.execution.debugger.MatlabBreakpoints
+import com.github.kornilova203.matlab.execution.debugger.MatlabDebugger
+import com.github.kornilova203.matlab.execution.debugger.MatlabFrame
+import com.github.kornilova203.matlab.execution.debugger.MatlabLineBreakpointType
+import com.github.kornilova203.matlab.settings.MatlabSettings
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointListener
 import java.io.File
 import java.nio.charset.StandardCharsets
 
@@ -46,33 +55,85 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     @Volatile
     private var workspaceChanged = true
 
-    /** Output above, a MATLAB input line below it, with completion and history (up and down). */
-    val console: LanguageConsoleView = LanguageConsoleBuilder()
-        .executionEnabled { isAlive }
-        .initActions(object : BaseConsoleExecuteActionHandler(false) {
-            override fun execute(text: String, console: LanguageConsoleView) = typed(text)
-        }, "matlab")
-        .build(project, MatlabLanguage.INSTANCE)
+    /** MATLAB is at its prompt, waiting for a command (so hidden queries are answered right away). */
+    @Volatile
+    var isIdle = false
+        private set
+
+    /** MATLAB is stopped in its debugger (`K>>`). */
+    @Volatile
+    var isInDebugger = false
+        private set
+    private val debugger = MatlabDebugger(this)
+
+    /** The IDE's breakpoints (or Pause on Errors) changed since MATLAB got them. */
+    @Volatile
+    private var breakpointsChanged = true
+    private var warnedAboutEngineBreakpoints = false
+
+    private val queryIds = java.util.concurrent.atomic.AtomicInteger()
+    private val answers = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.CompletableFuture<String>>()
+    /** Members by expression, for the current workspace; cleared when it changes. */
+    private val memberCache = java.util.concurrent.ConcurrentHashMap<String, List<MatlabMember>>()
+
+    /**
+     * Output above, a MATLAB input line below it, with completion and history (up and down). The plain console,
+     * not the builder's: that one adds a gutter with markers and lines between the commands.
+     */
+    val console: LanguageConsoleView = LanguageConsoleImpl(project, name, MatlabLanguage.INSTANCE)
+
+    /** The prompt MATLAB showed last: `>> `, or `K>> ` in the debugger. */
+    @Volatile
+    private var currentPrompt = MatlabOutputFilter.PROMPTS[0]
+    /** When MATLAB last printed something, to notice it waiting for an answer to input(). */
+    @Volatile
+    private var lastOutput = 0L
 
     init {
         Disposer.register(this, console)
-        // MATLAB prints its own ">> " prompt in the output
-        console.prompt = ""
+        LanguageConsoleBuilder.registerExecuteAction(console, { typed(it) }, "matlab", null) { isAlive }
+        // MATLAB's own prompts are taken out of the output; the input line shows the current one
+        console.prompt = currentPrompt
+        // Like MATLAB's command window: no prompt and no typing while MATLAB is busy, starting up included
+        if (listsWorkspace) console.isEditable = false
         console.virtualFile.putUserData(MatlabWorkspace.KEY, workspace)
+        workspace.members = { expression -> members(expression) }
         val commandLine = commandLine(kind, interpreter, workingDirectory)
         // Not the colored handler: its escape-code decoding mustn't touch the workspace markers
         processHandler = KillableProcessHandler(commandLine)
         ProcessTerminatedListener.attach(processHandler, project, "\n$name exited with code \$EXIT_CODE$\n")
         val filter = MatlabOutputFilter(
-            onWorkspace = { workspace.update(MatlabWorkspace.parse(it)) },
-            onPrompt = {
-                if (workspaceChanged) {
-                    workspaceChanged = false
-                    try {
-                        write(MatlabConsoleCode.workspaceQuery())
-                    } catch (e: java.io.IOException) {
-                        // No Variables then; the console itself works on
+            onHidden = { tag, text ->
+                when (tag) {
+                    MatlabConsoleCode.WORKSPACE_TAG -> {
+                        memberCache.clear()
+                        workspace.update(MatlabWorkspace.parse(text))
                     }
+                    MatlabConsoleCode.BREAKPOINTS_TAG -> MatlabBreakpoints.showRefused(project, text)
+                    MatlabConsoleCode.STACK_TAG -> debugger.stoppedAt(MatlabFrame.parse(text))
+                    else -> answers.remove(tag)?.complete(text)
+                }
+            },
+            onPrompt = { prompt ->
+                isIdle = true
+                currentPrompt = prompt
+                showInput(prompt)
+                if (breakpointsChanged) syncBreakpoints()
+                try {
+                    if (workspaceChanged) {
+                        workspaceChanged = false
+                        write(MatlabConsoleCode.workspaceQuery())
+                    }
+                    // Stopped in the debugger: where? (after the workspace, so the debugger shows it current)
+                    if (MatlabOutputFilter.isDebugPrompt(prompt)) {
+                        isInDebugger = true
+                        write(MatlabConsoleCode.stackQuery())
+                    } else if (isInDebugger) {
+                        isInDebugger = false
+                        debugger.left()
+                    }
+                } catch (e: java.io.IOException) {
+                    // No Variables or debugger then; the console itself works on
                 }
             })
         processHandler.addProcessListener(object : ProcessListener {
@@ -80,10 +141,94 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
                 val type = ConsoleViewContentType.getConsoleViewType(outputType)
                 val shown = if (listsWorkspace && outputType != ProcessOutputTypes.SYSTEM && !ProcessOutputType.isStderr(outputType))
                     filter.feed(event.text) else event.text
-                if (shown.isNotEmpty()) console.print(shown, type)
+                if (shown.isNotEmpty()) {
+                    console.print(shown, type)
+                    val at = System.nanoTime()
+                    lastOutput = at
+                    if (listsWorkspace && !isIdle && !shown.endsWith('\n')) waitingForAnswer(at)
+                }
+            }
+        })
+        processHandler.addProcessListener(object : ProcessListener {
+            override fun processTerminated(event: ProcessEvent) {
+                if (isInDebugger) {
+                    isInDebugger = false
+                    debugger.left()
+                }
+            }
+        })
+        // Breakpoints apply as soon as they're set, like in MATLAB
+        project.messageBus.connect(this).subscribe(XBreakpointListener.TOPIC, object : XBreakpointListener<XBreakpoint<*>> {
+            override fun breakpointAdded(breakpoint: XBreakpoint<*>) = changed(breakpoint)
+            override fun breakpointRemoved(breakpoint: XBreakpoint<*>) = changed(breakpoint)
+            override fun breakpointChanged(breakpoint: XBreakpoint<*>) = changed(breakpoint)
+            private fun changed(breakpoint: XBreakpoint<*>) {
+                if (breakpoint.type is MatlabLineBreakpointType) breakpointsChanged()
             }
         })
         processHandler.startNotify()
+    }
+
+    /** Gives MATLAB the new breakpoints now if it's waiting, else before its next command. */
+    fun breakpointsChanged() {
+        breakpointsChanged = true
+        if (isIdle && isAlive && listsWorkspace) syncBreakpoints()
+    }
+
+    private fun syncBreakpoints() {
+        breakpointsChanged = false
+        val breakpoints = MatlabBreakpoints.specs(project)
+        if (kind == Kind.MATLAB_ENGINE && breakpoints.isNotEmpty() && !warnedAboutEngineBreakpoints) {
+            warnedAboutEngineBreakpoints = true
+            NotificationGroupManager.getInstance().getNotificationGroup("MATLAB").createNotification(
+                "Breakpoints on Windows are experimental: MATLAB's Java engine may not stop in the IDE. " +
+                        "If MATLAB stops responding at a breakpoint, press Interrupt or close the console tab.",
+                NotificationType.WARNING).notify(project)
+        }
+        try {
+            write(MatlabConsoleCode.breakpointsQuery(breakpoints, MatlabSettings.getInstance().pauseOnErrors))
+        } catch (e: java.io.IOException) {
+            breakpointsChanged = true
+        }
+    }
+
+    /** A debugger command (`dbstep`, `dbcont`, ...), shown as typed; only while MATLAB waits at K>>. */
+    fun debugCommand(command: String) {
+        if (isInDebugger && isIdle) send(command)
+    }
+
+    /** Run to Cursor: a breakpoint there for this once (the next sync takes it away), then dbcont. */
+    fun runToLine(path: String, line: Int) {
+        if (!isInDebugger || !isIdle) return
+        val file = com.intellij.openapi.util.io.FileUtil.toSystemDependentName(path).replace("'", "''")
+        // Hidden, like the other queries, so its prompt doesn't count as MATLAB waiting
+        write("try, dbstop('in', '$file', 'at', '$line'); catch, end, fprintf('%stmp\\n%s', char(2), char(4))")
+        send("dbcont")
+        breakpointsChanged = true
+    }
+
+    /**
+     * Evaluates [expression] where MATLAB is stopped (or in the workspace); the answer is class and size, a line
+     * break, and MATLAB's display of the value (or `error`, a line break and the message). Null if MATLAB is busy.
+     */
+    fun evaluate(expression: String): java.util.concurrent.CompletableFuture<String>? {
+        if (!isAlive || !isIdle || !listsWorkspace) return null
+        val id = queryIds.incrementAndGet()
+        return ask("e$id", MatlabConsoleCode.evalQuery(id, expression))?.orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+    }
+
+    /** Sends a hidden [query]; its answer (under [tag]) completes the future. Null if it couldn't be sent. */
+    private fun ask(tag: String, query: String): java.util.concurrent.CompletableFuture<String>? {
+        val answer = java.util.concurrent.CompletableFuture<String>()
+        answers[tag] = answer
+        answer.whenComplete { _, _ -> answers.remove(tag) }
+        return try {
+            write(query)
+            answer
+        } catch (e: java.io.IOException) {
+            answers.remove(tag)
+            null
+        }
     }
 
     val isAlive: Boolean get() = !processHandler.isProcessTerminating && !processHandler.isProcessTerminated
@@ -94,8 +239,10 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
      */
     fun send(command: String, code: String? = null) {
         if (callsClc(command) || code != null && callsClc(code)) clearConsole()
+        console.print(currentPrompt, console.promptAttributes)
         console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
-        execute(command)
+        // A run gets the breakpoints again: MATLAB may have dropped them when the file changed
+        execute(command, syncBreakpoints = code != null)
     }
 
     /** What the user entered in the console's input (already shown in the output). */
@@ -106,16 +253,78 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         execute(if (lines.size <= 1) text.trim() else MatlabConsoleCode.runCode(text))
     }
 
-    private fun execute(command: String) {
+    private fun execute(command: String, syncBreakpoints: Boolean = false) {
+        if (listsWorkspace && (syncBreakpoints || breakpointsChanged)) syncBreakpoints()
         workspaceChanged = true
+        isIdle = false
+        if (listsWorkspace) onEdt { console.isEditable = false }
+        memberCache.clear()
         write(command)
+    }
+
+    /** Lets the user type again, after [prompt] (`>> `, or `K>> ` while MATLAB is stopped in the debugger). */
+    private fun showInput(prompt: String) = onEdt {
+        console.prompt = prompt
+        console.isEditable = true
+    }
+
+    /**
+     * Output that ends mid-line and then nothing more: MATLAB waits for an answer (`input('Name: ')`), so the
+     * input line opens, without a prompt (the question is the prompt).
+     */
+    private fun waitingForAnswer(at: Long) {
+        com.intellij.util.concurrency.AppExecutorUtil.getAppScheduledExecutorService().schedule({
+            if (lastOutput == at && !isIdle && isAlive) onEdt {
+                console.prompt = ""
+                console.isEditable = true
+            }
+        }, 400, java.util.concurrent.TimeUnit.MILLISECONDS)
+    }
+
+    private fun onEdt(action: () -> Unit) {
+        val application = ApplicationManager.getApplication()
+        val run = { if (!disposed) action() }
+        if (application.isDispatchThread) run() else application.invokeLater(run, com.intellij.openapi.application.ModalityState.any())
+    }
+
+    /**
+     * The fields, properties and methods of [expression] (`s`, `s.data(2)`), asked from MATLAB. Empty if MATLAB
+     * is busy or doesn't answer within a second or two. Waits, so call it in the background (completion does).
+     */
+    fun members(expression: String): List<MatlabMember> {
+        memberCache[expression]?.let { return it }
+        if (!isAlive || !isIdle || !listsWorkspace) return emptyList()
+        val id = queryIds.incrementAndGet()
+        val answer = ask("m$id", MatlabConsoleCode.membersQuery(id, expression)) ?: return emptyList()
+        val deadline = System.currentTimeMillis() + 2_000
+        while (!answer.isDone && System.currentTimeMillis() < deadline) {
+            // Typing cancels completion: don't hold it up
+            try {
+                com.intellij.openapi.progress.ProgressManager.checkCanceled()
+            } catch (e: com.intellij.openapi.progress.ProcessCanceledException) {
+                // The answer still comes and is dropped; keep it for the next try
+                answer.thenAccept { memberCache[expression] = MatlabMember.parse(it) }
+                throw e
+            }
+            try {
+                answer.get(20, java.util.concurrent.TimeUnit.MILLISECONDS)
+            } catch (e: java.util.concurrent.TimeoutException) {
+            }
+        }
+        val text = answer.getNow(null) ?: return emptyList()
+        return MatlabMember.parse(text).also { memberCache[expression] = it }
     }
 
     /**
      * MATLAB's `clc` can't clear this console (it isn't MATLAB's command window), so the console is cleared
      * when a command or script calls it, before it runs.
      */
-    private fun clearConsole() = console.clear()
+    private fun clearConsole() {
+        console.clear()
+        // Keep the input line as it was (prompt and all)
+        val prompt = currentPrompt
+        onEdt { if (console.isEditable) console.prompt = prompt }
+    }
 
     @Synchronized
     private fun write(line: String) {
@@ -146,7 +355,11 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     }
 
     /** Ends MATLAB: asks it to exit (so MATLAB started by the engine closes too), then stops the process. */
+    @Volatile
+    private var disposed = false
+
     override fun dispose() {
+        disposed = true
         if (!isAlive) return
         write("exit")
         val handler = processHandler
