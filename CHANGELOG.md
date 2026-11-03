@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `.m` files get the original Matlab Support file icon again (with a variant for dark themes)
+- Plugin logo: a plain red-orange M
+- Warning when the original Matlab Support plugin is enabled as well: both handle .m files, which breaks highlighting
+
 ## 1.1.0
 
 - **MATLAB path**: folders outside the project (like `addpath`) in Settings | Languages & Frameworks | MATLAB, and optionally MATLAB's own `toolbox/matlab`, are indexed, so their functions, classes and packages resolve and complete

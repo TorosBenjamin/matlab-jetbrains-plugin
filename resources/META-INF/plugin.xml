@@ -170,6 +170,8 @@
             <className>com.github.kornilova203.matlab.editor.MatlabCreateLocalFunctionIntention</className>
             <category>MATLAB</category>
         </intentionAction>
+        <notificationGroup id="MATLAB" displayType="BALLOON"/>
+        <postStartupActivity implementation="com.github.kornilova203.matlab.MatlabConflictCheck"/>
         <highlightUsagesHandlerFactory implementation="com.github.kornilova203.matlab.highlighting.MatlabBlockKeywordHighlighterFactory"/>
         
     </extensions>
