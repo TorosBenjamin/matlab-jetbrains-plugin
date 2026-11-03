@@ -1,5 +1,6 @@
 package com.github.kornilova203.matlab.execution.console
 
+import com.github.kornilova203.matlab.execution.debugger.MatlabBreakpointSpec
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
