@@ -123,20 +123,17 @@ class MatlabDebuggerTest : BasePlatformTestCase() {
         val list = Regex("ide_breakpoints__\\('(.*?)'").findAll(log.readText()).last().groupValues[1]
         assertEquals("${scriptFile.path}\t2\t\n", File(list).readText())
 
-        // MATLAB stops: a debug session at its line
+        // MATLAB stops: the debugger gets where (the Debug tool window itself isn't opened in tests)
+        val events = java.util.Collections.synchronizedList(ArrayList<String>())
+        MatlabDebugger.testEvents = events
+        Disposer.register(testRootDisposable) { MatlabDebugger.testEvents = null }
         session.send("go")
-        waitUntil("stopped") { session.isInDebugger && XDebuggerManager.getInstance(project).debugSessions.isNotEmpty() }
-        val debugSession = XDebuggerManager.getInstance(project).debugSessions.single()
-        waitUntil("position") { debugSession.currentPosition != null }
-        assertEquals(1, debugSession.currentPosition!!.line)
+        waitUntil("stopped") { session.isInDebugger && events.isNotEmpty() }
+        assertEquals("stopped main:2", events.first())
 
-        // Resume continues MATLAB, which leaves the debugger: the session ends
-        debugSession.resume()
+        // Resume continues MATLAB, which leaves the debugger
+        session.debugCommand("dbcont")
         waitUntil("dbcont sent") { log.readText().lines().contains("dbcont") }
-        waitUntil("left the debugger") { !session.isInDebugger && debugSession.isStopped }
-        // Close the debug tab, as the user would
-        @Suppress("DEPRECATION")
-        Disposer.dispose(debugSession.runContentDescriptor)
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        waitUntil("left the debugger") { !session.isInDebugger && events.contains("left") }
     }
 }

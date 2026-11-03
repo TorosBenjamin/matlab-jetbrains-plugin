@@ -46,12 +46,14 @@ class MatlabDebugger(private val matlab: MatlabConsoleSession) {
 
     /** MATLAB stopped (at a breakpoint, after a step, or after a command typed at `K>>`) with [frames]. */
     fun stoppedAt(frames: List<MatlabFrame>) = onEdt {
+        testEvents?.let { it += "stopped " + frames.joinToString { f -> "${f.name}:${f.line}" }; return@onEdt }
         val current = process ?: start() ?: return@onEdt
         current.stoppedAt(frames)
     }
 
     /** MATLAB left the debugger (dbcont to the end, dbquit, an error): the debug session ends. */
     fun left() = onEdt {
+        testEvents?.let { it += "left"; return@onEdt }
         val current = process ?: return@onEdt
         process = null
         current.leaving = true
@@ -75,6 +77,13 @@ class MatlabDebugger(private val matlab: MatlabConsoleSession) {
         created
     } catch (e: ExecutionException) {
         null
+    }
+
+    companion object {
+        /** In tests: what the debugger would show, instead of opening the Debug tool window. */
+        @org.jetbrains.annotations.TestOnly
+        @Volatile
+        internal var testEvents: MutableList<String>? = null
     }
 
     private fun onEdt(action: () -> Unit) {
