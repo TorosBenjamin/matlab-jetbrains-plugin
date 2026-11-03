@@ -39,6 +39,6 @@ class MatlabRunSelectionAction : AnAction(), DumbAware {
             document.getText(com.intellij.openapi.util.TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)))
         }
         if (code.isBlank()) return
-        MatlabConsoleManager.getInstance(project).run(MatlabConsoleCode.runCode(code))
+        MatlabConsoleManager.getInstance(project).run(MatlabConsoleCode.runCode(code), code = code)
     }
 }

@@ -2,17 +2,25 @@ package com.github.kornilova203.matlab.execution.console
 
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.filters.TextConsoleBuilderFactory
-import com.intellij.execution.process.KillableColoredProcessHandler
+import com.github.kornilova203.matlab.MatlabLanguage
+import com.intellij.execution.console.BaseConsoleExecuteActionHandler
+import com.intellij.execution.console.LanguageConsoleBuilder
+import com.intellij.execution.console.LanguageConsoleView
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.BaseOSProcessHandler
+import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
-import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -27,27 +35,89 @@ import java.nio.charset.StandardCharsets
  *  - Octave: `octave-cli --interactive`
  */
 class MatlabConsoleSession(val project: Project, val name: String, val interpreter: String, workingDirectory: String?) : Disposable {
-    val console: ConsoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).console
     private val kind = Kind.of(interpreter)
     val processHandler: ProcessHandler
 
+    /** The session's variables, if this kind of session can list them (MATLAB and Octave). */
+    val workspace = MatlabWorkspace()
+    private val listsWorkspace = kind != Kind.OTHER
+
+    /** Set when a command was sent: the workspace is listed again once MATLAB is back at its prompt. */
+    @Volatile
+    private var workspaceChanged = true
+
+    /** Output above, a MATLAB input line below it, with completion and history (up and down). */
+    val console: LanguageConsoleView = LanguageConsoleBuilder()
+        .executionEnabled { isAlive }
+        .initActions(object : BaseConsoleExecuteActionHandler(false) {
+            override fun execute(text: String, console: LanguageConsoleView) = typed(text)
+        }, "matlab")
+        .build(project, MatlabLanguage.INSTANCE)
+
     init {
         Disposer.register(this, console)
+        // MATLAB prints its own ">> " prompt in the output
+        console.prompt = ""
+        console.virtualFile.putUserData(MatlabWorkspace.KEY, workspace)
         val commandLine = commandLine(kind, interpreter, workingDirectory)
-        processHandler = KillableColoredProcessHandler(commandLine)
+        // Not the colored handler: its escape-code decoding mustn't touch the workspace markers
+        processHandler = KillableProcessHandler(commandLine)
         ProcessTerminatedListener.attach(processHandler, project, "\n$name exited with code \$EXIT_CODE$\n")
-        console.attachToProcess(processHandler)
+        val filter = MatlabOutputFilter(
+            onWorkspace = { workspace.update(MatlabWorkspace.parse(it)) },
+            onPrompt = {
+                if (workspaceChanged) {
+                    workspaceChanged = false
+                    try {
+                        write(MatlabConsoleCode.workspaceQuery())
+                    } catch (e: java.io.IOException) {
+                        // No Variables then; the console itself works on
+                    }
+                }
+            })
+        processHandler.addProcessListener(object : ProcessListener {
+            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                val type = ConsoleViewContentType.getConsoleViewType(outputType)
+                val shown = if (listsWorkspace && outputType != ProcessOutputTypes.SYSTEM && !ProcessOutputType.isStderr(outputType))
+                    filter.feed(event.text) else event.text
+                if (shown.isNotEmpty()) console.print(shown, type)
+            }
+        })
         processHandler.startNotify()
     }
 
     val isAlive: Boolean get() = !processHandler.isProcessTerminating && !processHandler.isProcessTerminated
 
-    /** Runs [command] (one line), shown in the console as if typed. */
-    fun send(command: String) {
+    /**
+     * Runs [command] (one line), shown in the console as if typed. [code] is what it runs (a script's text),
+     * if that's not [command] itself; if either calls `clc`, the console is cleared first.
+     */
+    fun send(command: String, code: String? = null) {
+        if (callsClc(command) || code != null && callsClc(code)) clearConsole()
         console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
+        execute(command)
+    }
+
+    /** What the user entered in the console's input (already shown in the output). */
+    private fun typed(text: String) {
+        if (callsClc(text)) clearConsole()
+        val lines = text.lines().dropLastWhile { it.isBlank() }
+        // Several lines (a loop, say) run as a script: the Windows engine takes one line per command
+        execute(if (lines.size <= 1) text.trim() else MatlabConsoleCode.runCode(text))
+    }
+
+    private fun execute(command: String) {
+        workspaceChanged = true
         write(command)
     }
 
+    /**
+     * MATLAB's `clc` can't clear this console (it isn't MATLAB's command window), so the console is cleared
+     * when a command or script calls it, before it runs.
+     */
+    private fun clearConsole() = console.clear()
+
+    @Synchronized
     private fun write(line: String) {
         val input = processHandler.processInput ?: return
         try {
@@ -66,7 +136,7 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
             return true
         }
         if (SystemInfo.isWindows) return false
-        val process = (processHandler as? KillableColoredProcessHandler)?.process ?: return false
+        val process = (processHandler as? BaseOSProcessHandler)?.process ?: return false
         // SIGINT, as Ctrl+C in a terminal
         return try {
             ProcessBuilder("kill", "-INT", process.pid().toString()).start().waitFor() == 0
@@ -106,6 +176,13 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     }
 
     companion object {
+        private val CLC = Regex("""(?<![\w.'"])clc\s*(\(\s*\))?\s*(?=[;,]|$)""")
+
+        /** Whether [code] calls `clc` as a statement (not in a comment, not `x.clc` or `clc = 1`). */
+        fun callsClc(code: String): Boolean = code.lineSequence().any { line ->
+            CLC.containsMatchIn(line.substringBefore('%'))
+        }
+
         fun commandLine(kind: Kind, interpreter: String, workingDirectory: String?): GeneralCommandLine {
             val commandLine = when (kind) {
                 Kind.MATLAB -> GeneralCommandLine(interpreter, "-nodesktop", "-nosplash")
@@ -137,7 +214,8 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
             val native = File(root, "bin/" + nativeFolder()).path
             val pathVariable = if (SystemInfo.isWindows) "PATH" else if (SystemInfo.isMac) "DYLD_LIBRARY_PATH" else "LD_LIBRARY_PATH"
             val path = listOfNotNull(native, System.getenv(pathVariable)).joinToString(File.pathSeparator)
-            return GeneralCommandLine(java.path, "-cp", classPath, MatlabEngineBridge::class.java.name)
+            // The engine loads MATLAB's native libraries; without this, Java 22+ warns about it on every run
+            return GeneralCommandLine(java.path, "--enable-native-access=ALL-UNNAMED", "-cp", classPath, MatlabEngineBridge::class.java.name)
                 .withEnvironment(pathVariable, path)
         }
 

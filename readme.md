@@ -24,7 +24,8 @@ Liudmila Kornilova, published as a separate plugin. All credit for the original 
   (`%#ok`) and create functions that are called but not defined
 - **Running** scripts, single `%%` sections or the selection (Alt+Shift+E) with MATLAB or GNU Octave, in a **MATLAB
   console** that keeps running between runs, so variables are kept and later runs start instantly; more consoles with +
-  in the MATLAB tool window or Tools | New MATLAB Console
+  in the MATLAB tool window or Tools | New MATLAB Console. The console's input line has completion (including
+  workspace variables) and history, and the **Variables** view next to it shows the workspace
 - **Imports**: package members used without an import are reported, with fixes to import them or write the package
   name; completion adds the import; Code | Optimize Imports removes unused ones
 - **Editing**: Reformat Code, parameter info (Ctrl+P, with types and defaults from `arguments` blocks),
@@ -54,7 +55,9 @@ Objective-C, so the plugin conflicts there.
 ## Running MATLAB files
 Right click a `.m` file, or click ▶ in the gutter next to a `%%` section or a function file's main function. The code
 runs in the **MATLAB** tool window, in a MATLAB session that stays open: the next run reuses it, and you can type
-commands there. On Windows the console connects through MATLAB's Java Engine API (MATLAB R2016b or newer). To start a
+commands in the input line at its bottom (Enter runs, up and down go through earlier commands, completion offers
+functions and the variables in the workspace). The **Variables** view on the right lists the workspace after each
+command; double-click a variable to print it. `clc` clears the console. On Windows the console connects through MATLAB's Java Engine API (MATLAB R2016b or newer). To start a
 new MATLAB for each run instead, uncheck *Run in the MATLAB console* in the run configuration.
 
 MATLAB is found automatically (on `PATH`, or in the standard install folders such as `/usr/local/MATLAB/R20xx`).

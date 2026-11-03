@@ -70,10 +70,10 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
         return session
     }
 
-    /** Runs [command] in the active session, starting one if needed. */
-    fun run(command: String, interpreterPath: String? = null): MatlabConsoleSession? {
+    /** Runs [command] in the active session, starting one if needed. [code]: what it runs, see [MatlabConsoleSession.send]. */
+    fun run(command: String, interpreterPath: String? = null, code: String? = null): MatlabConsoleSession? {
         val session = activeSession() ?: newSession(interpreterPath) ?: return null
-        session.send(command)
+        session.send(command, code)
         toolWindow()?.let { window ->
             window.contentManager.contents.firstOrNull { it.getUserData(SESSION) == session }
                 ?.let { window.contentManager.setSelectedContent(it) }
@@ -100,7 +100,10 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
 /** What to send to a session to run a file, a section or a selection. */
 object MatlabConsoleCode {
     private var scriptCounter = 0
-    private val scriptDirectory: File by lazy { FileUtil.createTempDirectory("matlab-console", null, true) }
+    private val tempDirectory: File by lazy { FileUtil.createTempDirectory("matlab-console", null, true) }
+
+    /** Where run scripts and the workspace helper go; made again if something cleaned up the temp folder. */
+    private val scriptDirectory: File get() = tempDirectory.also { it.mkdirs() }
 
     /** `run('file.m')`: MATLAB changes to the file's folder while it runs. */
     fun runFile(path: String): String = "run('${quote(path)}')"
@@ -117,13 +120,68 @@ object MatlabConsoleCode {
         return "addpath('${quote(scriptDirectory.path)}'); $name"
     }
 
+    /**
+     * The hidden command that lists the workspace: `ide_workspace__` (written next to the run scripts) prints
+     * the variables between [MatlabOutputFilter.BEGIN] and [MatlabOutputFilter.END]. The first time, its folder
+     * is put on the path. Errors are swallowed, so nothing of it shows in the console.
+     */
+    fun workspaceQuery(): String {
+        val function = File(scriptDirectory, "ide_workspace__.m")
+        if (!function.isFile) function.writeText(WORKSPACE_FUNCTION)
+        return "try, ide_workspace__; catch, try, addpath('${quote(scriptDirectory.path)}'); ide_workspace__; " +
+                "catch, fprintf('%s', char([2 4])); end, end"
+    }
+
     private fun quote(text: String) = text.replace("'", "''")
+
+    // Works in MATLAB and Octave. Builds everything first, so the end marker is always printed.
+    private val WORKSPACE_FUNCTION = """
+        function ide_workspace__()
+        % Written by the IDE's MATLAB plugin: lists the workspace for its Variables view
+        out = '';
+        try
+            vars = evalin('caller', 'whos');
+            for k = 1:numel(vars)
+                v = vars(k);
+                value = '';
+                try
+                    if v.bytes <= 100000
+                        value = ide_value__(evalin('caller', v.name));
+                    end
+                catch
+                end
+                sz = [sprintf('%d', v.size(1)), sprintf('x%d', v.size(2:end))];
+                out = [out, v.name, char(9), sz, char(9), v.class, char(9), value, char(10)]; %#ok<AGROW>
+            end
+        catch
+        end
+        fprintf('%s%s%s', char(2), out, char(4));
+        end
+
+        function s = ide_value__(x)
+        s = '';
+        if (isnumeric(x) || islogical(x)) && ismatrix(x) && numel(x) <= 12
+            s = mat2str(x, 5);
+        elseif ischar(x) && size(x, 1) <= 1
+            s = [, x, ];
+        elseif isstring(x) && numel(x) == 1
+            s = ['"', char(x), '"'];
+        end
+        s = regexprep(s, '[\t\r\n]', ' ');
+        if numel(s) > 80
+            s = [s(1:77), '...'];
+        end
+        end
+        """.trimIndent() + "\n"
 }
 
-/** A session's tab: its console with a toolbar. */
+/** A session's tab: its console with a toolbar, and its variables on the right. */
 class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleToolWindowPanel(false, true) {
     init {
-        setContent(session.console.component)
+        val splitter = com.intellij.ui.JBSplitter(false, "matlab.console.variables", 0.7f)
+        splitter.firstComponent = session.console.component
+        splitter.secondComponent = MatlabVariablesView(session)
+        setContent(splitter)
         val group = DefaultActionGroup()
         group.add(InterruptAction())
         group.add(ActionManager.getInstance().getAction(NEW_CONSOLE_ACTION))
