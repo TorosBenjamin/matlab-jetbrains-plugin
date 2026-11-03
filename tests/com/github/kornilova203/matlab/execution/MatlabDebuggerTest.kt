@@ -16,6 +16,14 @@ import java.io.File
 import java.nio.file.Files
 
 class MatlabDebuggerTest : BasePlatformTestCase() {
+    override fun tearDown() {
+        try {
+            MatlabDebugger.testEvents = null
+        } finally {
+            super.tearDown()
+        }
+    }
+
     fun testParseFrames() = assertEquals(
         listOf(MatlabFrame("/w/inner.m", "inner", 4), MatlabFrame("/w/main.m", "main", 10)),
         MatlabFrame.parse("/w/inner.m\tinner\t4\n/w/main.m\tmain\t10\r\n/opt/matlab/toolbox/matlab/lang/run.m\trun\t91\nbad\n"))
@@ -126,7 +134,6 @@ class MatlabDebuggerTest : BasePlatformTestCase() {
         // MATLAB stops: the debugger gets where (the Debug tool window itself isn't opened in tests)
         val events = java.util.Collections.synchronizedList(ArrayList<String>())
         MatlabDebugger.testEvents = events
-        Disposer.register(testRootDisposable) { MatlabDebugger.testEvents = null }
         session.send("go")
         waitUntil("stopped") { session.isInDebugger && events.isNotEmpty() }
         assertEquals("stopped main:2", events.first())
