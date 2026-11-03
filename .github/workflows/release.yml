@@ -1,0 +1,63 @@
+name: Release
+
+# Run on master from the Actions tab, or push a tag v<version>. The version comes from build.gradle.kts.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+      PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Version and notes
+        id: version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' build.gradle.kts)
+          tag="v$version"
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "$tag" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match version $version in build.gradle.kts"; exit 1
+          fi
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "::error::Release $tag already exists; bump the version in build.gradle.kts"; exit 1
+          fi
+          # The CHANGELOG.md section of this version, without its heading
+          awk -v v="$version" '$0 == "## " v {found = 1; next} /^## / {found = 0} found' CHANGELOG.md > notes.md
+          if [[ ! -s notes.md ]]; then echo "::error::CHANGELOG.md has no '## $version' section"; exit 1; fi
+          printf '\nInstall: Settings | Plugins | ⚙ | Install Plugin from Disk... and pick the zip below.\n' >> notes.md
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Test and build
+        run: ./gradlew test buildPlugin
+
+      - name: Create GitHub release
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" build/distributions/*.zip \
+            --title "Unofficial MATLAB Support ${{ steps.version.outputs.version }}" \
+            --notes-file notes.md --target "$GITHUB_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Publish to JetBrains Marketplace
+        if: ${{ env.PUBLISH_TOKEN != '' && env.CERTIFICATE_CHAIN != '' }}
+        run: ./gradlew signPlugin publishPlugin

@@ -14,12 +14,14 @@ Liudmila Kornilova, published as a separate plugin. All credit for the original 
 - **Highlighting** of fields, methods, parameters, the object variable, types, attributes, function calls
   (Settings | Editor | Color Scheme | MATLAB)
 - **Navigation**: go to definition (including into packages and class folders), find usages, usage counts,
-  Navigate | Class / Symbol, structure view, breadcrumbs
+  Navigate | Class / Symbol, structure view, breadcrumbs; class inheritance: inherited members, gutter icons for
+  subclasses and overridden methods, Go to Implementation and Super Method
 - **Completion** that depends on the position: class members after `obj.`, struct fields, attributes and their
   values, types, validators, package members; method results such as singletons (`AppConfig.getInstance()`)
 - **Refactoring**: rename (a class, its constructor and its file together), introduce/inline variable
 - **Inspections**: unused variables, functions and imports, unreachable code, unresolved imports, and MATLAB's
-  own code analyzer (mlint) when MATLAB is installed
+  own code analyzer (mlint) when MATLAB is installed; quick fixes remove what's unused, suppress mlint warnings
+  (`%#ok`) and create functions that are called but not defined
 - **Running** scripts or single `%%` sections with MATLAB or GNU Octave, from the gutter or the context menu
 - **Editing**: Reformat Code, parameter info (Ctrl+P, with types and defaults from `arguments` blocks),
   auto-inserted `end`, folding of `%%` sections, live templates (`for`, `if`, `fun`, `cls`, ...), Surround With,
@@ -74,6 +76,13 @@ Requirements: JDK 25 (the JetBrains Runtime bundled with IntelliJ works: `export
 
 Publishing to the Marketplace reads its secrets from environment variables: `CERTIFICATE_CHAIN`, `PRIVATE_KEY`,
 `PRIVATE_KEY_PASSWORD` (`./gradlew signPlugin`) and `PUBLISH_TOKEN` (`./gradlew publishPlugin`).
+
+### Releasing
+1. Set `version` in `build.gradle.kts`, and describe the changes in `CHANGELOG.md` (a `## <version>` section) and in
+   `<change-notes>` in `plugin.xml`.
+2. Run the **Release** workflow on `master` (Actions | Release | Run workflow), or push a tag `v<version>`. It runs the
+   tests, builds the zip and creates the GitHub release `v<version>` with the changelog section as its notes.
+3. With the repository secrets above set, it also signs the plugin and publishes it to the JetBrains Marketplace.
 
 ## License
 MIT, see [LICENSE](LICENSE).
