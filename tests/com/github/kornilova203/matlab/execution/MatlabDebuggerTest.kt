@@ -134,5 +134,9 @@ class MatlabDebuggerTest : BasePlatformTestCase() {
         debugSession.resume()
         waitUntil("dbcont sent") { log.readText().lines().contains("dbcont") }
         waitUntil("left the debugger") { !session.isInDebugger && debugSession.isStopped }
+        // Close the debug tab, as the user would
+        @Suppress("DEPRECATION")
+        Disposer.dispose(debugSession.runContentDescriptor)
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
     }
 }
