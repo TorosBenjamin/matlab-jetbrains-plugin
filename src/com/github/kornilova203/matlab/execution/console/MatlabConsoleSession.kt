@@ -68,7 +68,11 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
             onPrompt = {
                 if (workspaceChanged) {
                     workspaceChanged = false
-                    write(MatlabConsoleCode.workspaceQuery())
+                    try {
+                        write(MatlabConsoleCode.workspaceQuery())
+                    } catch (e: java.io.IOException) {
+                        // No Variables then; the console itself works on
+                    }
                 }
             })
         processHandler.addProcessListener(object : ProcessListener {

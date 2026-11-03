@@ -100,7 +100,10 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
 /** What to send to a session to run a file, a section or a selection. */
 object MatlabConsoleCode {
     private var scriptCounter = 0
-    private val scriptDirectory: File by lazy { FileUtil.createTempDirectory("matlab-console", null, true) }
+    private val tempDirectory: File by lazy { FileUtil.createTempDirectory("matlab-console", null, true) }
+
+    /** Where run scripts and the workspace helper go; made again if something cleaned up the temp folder. */
+    private val scriptDirectory: File get() = tempDirectory.also { it.mkdirs() }
 
     /** `run('file.m')`: MATLAB changes to the file's folder while it runs. */
     fun runFile(path: String): String = "run('${quote(path)}')"

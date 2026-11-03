@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- **Console input**: the MATLAB console has an input line with highlighting, completion (including the session's variables), parameter info and history (up and down). Multi-line input runs as one block
+- **Variables**: the workspace next to the console, with name, value, size and class of each variable, refreshed after each command; double-click a variable to print it
+- `clc` clears the console (typed, or in a script, section or selection that is run)
+- Windows: no more warning about a restricted method (`System::loadLibrary`) when the console starts
+
 ## 1.2.0
 
 - **Imports**: a function or class from a package used without `import` (`Point(1)` for `+geometry/Point.m`) is reported, with fixes to add `import geometry.Point` to the function (after its help comment and arguments block) or to write `geometry.Point(1)`. Completion offers package members that aren't imported yet and adds the import. Code | Optimize Imports removes unused imports

@@ -151,7 +151,7 @@ class MatlabConsoleTest : BasePlatformTestCase() {
     fun testSessionSendsCommands() {
         if (SystemInfo.isWindows || !File("/bin/cat").exists()) return
         val session = MatlabConsoleSession(project, "Test", "/bin/cat", null)
-        Disposer.register(testRootDisposable) { session.processHandler.destroyProcess() }
+        Disposer.register(testRootDisposable) { session.processHandler.destroyProcess(); Disposer.dispose(session) }
         val text = output(session)
         session.send("disp('hello')")
         waitFor(text, "disp('hello')")
