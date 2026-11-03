@@ -52,7 +52,8 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
         }
         val name = "MATLAB " + ++counter
         val session = try {
-            MatlabConsoleSession(project, name, interpreter, project.basePath)
+            // Starts in the project's folder, if it has one on disk
+            MatlabConsoleSession(project, name, interpreter, project.basePath?.takeIf { File(it).isDirectory })
         } catch (e: Exception) {
             notifyError("Couldn't start $name: ${e.message}")
             return null
