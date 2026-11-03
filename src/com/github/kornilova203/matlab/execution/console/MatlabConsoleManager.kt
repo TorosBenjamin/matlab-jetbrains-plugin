@@ -1,6 +1,5 @@
 package com.github.kornilova203.matlab.execution.console
 
-import com.github.kornilova203.matlab.Icons
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -18,9 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.ContentFactory
 import com.intellij.icons.AllIcons
 import java.io.File
@@ -154,14 +151,5 @@ class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleTool
 
     companion object {
         const val NEW_CONSOLE_ACTION = "Matlab.NewConsole"
-    }
-}
-
-/** View | Tool Windows | MATLAB: empty until a script is run or a console is opened. */
-class MatlabConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
-    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        ActionManager.getInstance().getAction(MatlabConsolePanel.NEW_CONSOLE_ACTION)?.let { toolWindow.setTitleActions(listOf(it)) }
-        (toolWindow as? ToolWindowEx)?.emptyText?.text = "Run a MATLAB script, or open a console with +"
-        toolWindow.setIcon(Icons.Matlab)
     }
 }

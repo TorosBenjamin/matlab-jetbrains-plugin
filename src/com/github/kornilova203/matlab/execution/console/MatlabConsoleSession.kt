@@ -6,7 +6,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
-import com.intellij.execution.process.UnixProcessManager
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.Disposable
@@ -68,8 +67,12 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         }
         if (SystemInfo.isWindows) return false
         val process = (processHandler as? KillableColoredProcessHandler)?.process ?: return false
-        UnixProcessManager.sendSignal(process.pid().toInt(), UnixProcessManager.SIGINT)
-        return true
+        // SIGINT, as Ctrl+C in a terminal
+        return try {
+            ProcessBuilder("kill", "-INT", process.pid().toString()).start().waitFor() == 0
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /** Ends MATLAB: asks it to exit (so MATLAB started by the engine closes too), then stops the process. */
