@@ -56,6 +56,12 @@ class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguratio
 
         private fun quote(path: String) = path.replace("'", "''")
 
+        /** The text of [lines] (0-based, inclusive) of the file. */
+        internal fun sectionCode(filePath: String, lines: IntRange): String {
+            val source = File(filePath).readLines()
+            return source.subList(lines.first.coerceIn(0, source.size), (lines.last + 1).coerceIn(0, source.size)).joinToString("\n")
+        }
+
         internal fun sectionScript(filePath: String, lines: IntRange): File {
             val source = File(filePath).readLines()
             val code = source.subList(lines.first.coerceIn(0, source.size), (lines.last + 1).coerceIn(0, source.size))
@@ -66,5 +72,19 @@ class MatlabCommandLineState(private val runConfiguration: MatlabRunConfiguratio
         }
 
         private fun isOctave(interpreter: String): Boolean = File(interpreter).name.lowercase().contains("octave")
+    }
+}
+
+/** Runs the file or section in the MATLAB tool window's session (started if there's none), which keeps running. */
+class MatlabConsoleRunState(private val configuration: MatlabRunConfiguration) : com.intellij.execution.configurations.RunProfileState {
+    override fun execute(executor: com.intellij.execution.Executor?, runner: com.intellij.execution.runners.ProgramRunner<*>): com.intellij.execution.ExecutionResult? {
+        val path = configuration.getFilePath() ?: return null
+        val section = configuration.sectionLines
+        val command = if (section == null) com.github.kornilova203.matlab.execution.console.MatlabConsoleCode.runFile(path)
+        else com.github.kornilova203.matlab.execution.console.MatlabConsoleCode.runCode(MatlabCommandLineState.sectionCode(path, section))
+        com.github.kornilova203.matlab.execution.console.MatlabConsoleManager.getInstance(configuration.project)
+            .run(command, configuration.getInterpreterPath())
+        // The output is in the MATLAB tool window, not in a Run tab
+        return null
     }
 }

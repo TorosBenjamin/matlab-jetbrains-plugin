@@ -15,6 +15,7 @@ class MatlabConfigForm : CommonProgramParametersPanel() {
     private lateinit var interpreterOptionsComponent: LabeledComponent<RawCommandLineEditor>
     private lateinit var interpreterPathField: TextFieldWithBrowseButton
     private lateinit var filePathField: TextFieldWithBrowseButton
+    private lateinit var runInConsoleCheckBox: javax.swing.JCheckBox
 
     private fun fileField(title: String): TextFieldWithBrowseButton {
         val descriptor = FileChooserDescriptorFactory.singleFile().withTitle(title)
@@ -36,6 +37,10 @@ class MatlabConfigForm : CommonProgramParametersPanel() {
         add(labeled(filePathField, "File:"))
         add(labeled(interpreterPathField, "Interpreter path:"))
         add(interpreterOptionsComponent)
+        runInConsoleCheckBox = javax.swing.JCheckBox("Run in the MATLAB console (keeps MATLAB running between runs)")
+        runInConsoleCheckBox.toolTipText = "Unchecked: start a new MATLAB for each run with -batch, which exits afterwards. " +
+                "Interpreter options, working directory and environment variables only apply then."
+        add(runInConsoleCheckBox)
 
         super.addComponents()
         // A script run via run('file.m') can't receive command-line arguments.
@@ -46,11 +51,13 @@ class MatlabConfigForm : CommonProgramParametersPanel() {
         interpreterOptionsComponent.component.text = configuration.getInterpreterOptions()
         interpreterPathField.text = configuration.getInterpreterPath() ?: ""
         filePathField.text = configuration.getFilePath() ?: ""
+        runInConsoleCheckBox.isSelected = configuration.runInConsole
     }
 
     fun applyToForm(configuration: MatlabRunConfiguration) {
         configuration.setInterpreterOptions(interpreterOptionsComponent.component.text)
         configuration.setInterpreterPath(interpreterPathField.text)
         configuration.setFilePath(filePathField.text)
+        configuration.runInConsole = runInConsoleCheckBox.isSelected
     }
 }

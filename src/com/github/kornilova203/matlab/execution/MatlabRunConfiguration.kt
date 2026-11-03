@@ -25,6 +25,9 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
     var sectionLines: IntRange? = null
 
     /* see AbstractRunConfiguration */
+    /** Run in the MATLAB tool window's session, which keeps running, instead of a new MATLAB each time. */
+    var runInConsole: Boolean = true
+
     private val myEnvs = LinkedHashMap<String, String>()
     private var myPassParentEnvs = true
 
@@ -55,7 +58,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
         if (filePath == null) {
             throw MatlabCannotRunException.fileNotSetUp()
         }
-        return MatlabCommandLineState(this, environment)
+        return if (runInConsole) MatlabConsoleRunState(this) else MatlabCommandLineState(this, environment)
     }
 
     override fun getWorkingDirectory(): String? = workingDir
@@ -80,6 +83,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
         JDOMExternalizerUtil.writeField(element, "PARAMETERS", programParameters)
         JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", interpreterOptions)
         sectionLines?.let { JDOMExternalizerUtil.writeField(element, "SECTION_LINES", "${it.first}-${it.last}") }
+        JDOMExternalizerUtil.writeField(element, "RUN_IN_CONSOLE", runInConsole.toString())
         EnvironmentVariablesComponent.writeExternal(element, myEnvs)
     }
 
@@ -101,6 +105,7 @@ class MatlabRunConfiguration(project: Project, configurationFactory: Configurati
         }
         sectionLines = JDOMExternalizerUtil.readField(element, "SECTION_LINES")?.split('-')
             ?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size == 2 }?.let { it[0]..it[1] }
+        runInConsole = JDOMExternalizerUtil.readField(element, "RUN_IN_CONSOLE")?.let { parseBoolean(it) } ?: true
         workingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY")
         programParameters = JDOMExternalizerUtil.readField(element, "PARAMETERS")
 

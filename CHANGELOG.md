@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **MATLAB console**: runs go to a MATLAB session in the MATLAB tool window that keeps running, so later runs start instantly and the workspace is kept. Type commands there too, interrupt a running command, and open more sessions with + or Tools | New MATLAB Console. Run Selection in MATLAB Console (Alt+Shift+E) runs the selection or the current line. On Windows the console uses MATLAB's Java Engine API. The old behavior (a new MATLAB per run with `-batch`) is an option in the run configuration
 - `.m` files get the original Matlab Support file icon again (with a variant for dark themes)
 - Plugin logo: a plain red-orange M
 - Warning when the original Matlab Support plugin is enabled as well: both handle .m files, which breaks highlighting
