@@ -70,10 +70,10 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
         return session
     }
 
-    /** Runs [command] in the active session, starting one if needed. */
-    fun run(command: String, interpreterPath: String? = null): MatlabConsoleSession? {
+    /** Runs [command] in the active session, starting one if needed. [code]: what it runs, see [MatlabConsoleSession.send]. */
+    fun run(command: String, interpreterPath: String? = null, code: String? = null): MatlabConsoleSession? {
         val session = activeSession() ?: newSession(interpreterPath) ?: return null
-        session.send(command)
+        session.send(command, code)
         toolWindow()?.let { window ->
             window.contentManager.contents.firstOrNull { it.getUserData(SESSION) == session }
                 ?.let { window.contentManager.setSelectedContent(it) }

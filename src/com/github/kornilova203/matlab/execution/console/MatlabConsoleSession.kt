@@ -34,7 +34,11 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     init {
         Disposer.register(this, console)
         val commandLine = commandLine(kind, interpreter, workingDirectory)
-        processHandler = KillableColoredProcessHandler(commandLine)
+        processHandler = object : KillableColoredProcessHandler(commandLine) {
+            // What the user types in the console goes through here: `clc` clears the console
+            private val watched by lazy { ClcWatchingStream(super.getProcessInput()) { clearConsole() } }
+            override fun getProcessInput(): java.io.OutputStream? = super.getProcessInput()?.let { watched }
+        }
         ProcessTerminatedListener.attach(processHandler, project, "\n$name exited with code \$EXIT_CODE$\n")
         console.attachToProcess(processHandler)
         processHandler.startNotify()
@@ -42,14 +46,25 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
 
     val isAlive: Boolean get() = !processHandler.isProcessTerminating && !processHandler.isProcessTerminated
 
-    /** Runs [command] (one line), shown in the console as if typed. */
-    fun send(command: String) {
+    /**
+     * Runs [command] (one line), shown in the console as if typed. [code] is what it runs (a script's text),
+     * if that's not [command] itself; if either calls `clc`, the console is cleared first.
+     */
+    fun send(command: String, code: String? = null) {
+        if (callsClc(command) || code != null && callsClc(code)) clearConsole()
         console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
         write(command)
     }
 
+    /**
+     * MATLAB's `clc` can't clear this console (it isn't MATLAB's command window), so the console is cleared
+     * when a command or script calls it, before it runs.
+     */
+    private fun clearConsole() = console.clear()
+
     private fun write(line: String) {
-        val input = processHandler.processInput ?: return
+        // Past the clc watcher: send() has handled clc already
+        val input = (processHandler as? KillableColoredProcessHandler)?.process?.outputStream ?: return
         try {
             input.write((line + "\n").toByteArray(kind.charset))
             input.flush()
@@ -85,6 +100,26 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         }
     }
 
+    /** Passes everything on to [target]; calls [onClc] for each line that calls clc. */
+    private class ClcWatchingStream(private val target: java.io.OutputStream, private val onClc: () -> Unit) : java.io.OutputStream() {
+        private val line = java.io.ByteArrayOutputStream()
+
+        override fun write(b: Int) {
+            target.write(b)
+            if (b == '\n'.code) {
+                if (callsClc(line.toString(Charsets.UTF_8))) onClc()
+                line.reset()
+            } else if (line.size() < 10_000) line.write(b)
+        }
+
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            for (i in off until off + len) write(b[i].toInt())
+        }
+
+        override fun flush() = target.flush()
+        override fun close() = target.close()
+    }
+
     enum class Kind(val charset: java.nio.charset.Charset) {
         MATLAB(java.nio.charset.Charset.defaultCharset()),
         MATLAB_ENGINE(StandardCharsets.UTF_8),
@@ -106,6 +141,13 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     }
 
     companion object {
+        private val CLC = Regex("""(?<![\w.'"])clc\s*(\(\s*\))?\s*(?=[;,]|$)""")
+
+        /** Whether [code] calls `clc` as a statement (not in a comment, not `x.clc` or `clc = 1`). */
+        fun callsClc(code: String): Boolean = code.lineSequence().any { line ->
+            CLC.containsMatchIn(line.substringBefore('%'))
+        }
+
         fun commandLine(kind: Kind, interpreter: String, workingDirectory: String?): GeneralCommandLine {
             val commandLine = when (kind) {
                 Kind.MATLAB -> GeneralCommandLine(interpreter, "-nodesktop", "-nosplash")
@@ -137,7 +179,8 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
             val native = File(root, "bin/" + nativeFolder()).path
             val pathVariable = if (SystemInfo.isWindows) "PATH" else if (SystemInfo.isMac) "DYLD_LIBRARY_PATH" else "LD_LIBRARY_PATH"
             val path = listOfNotNull(native, System.getenv(pathVariable)).joinToString(File.pathSeparator)
-            return GeneralCommandLine(java.path, "-cp", classPath, MatlabEngineBridge::class.java.name)
+            // The engine loads MATLAB's native libraries; without this, Java 22+ warns about it on every run
+            return GeneralCommandLine(java.path, "--enable-native-access=ALL-UNNAMED", "-cp", classPath, MatlabEngineBridge::class.java.name)
                 .withEnvironment(pathVariable, path)
         }
 

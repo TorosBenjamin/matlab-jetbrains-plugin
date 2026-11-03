@@ -80,10 +80,12 @@ class MatlabConsoleRunState(private val configuration: MatlabRunConfiguration) :
     override fun execute(executor: com.intellij.execution.Executor?, runner: com.intellij.execution.runners.ProgramRunner<*>): com.intellij.execution.ExecutionResult? {
         val path = configuration.getFilePath() ?: return null
         val section = configuration.sectionLines
+        val code = if (section == null) java.io.File(path).takeIf { it.isFile }?.readText()
+        else MatlabCommandLineState.sectionCode(path, section)
         val command = if (section == null) com.github.kornilova203.matlab.execution.console.MatlabConsoleCode.runFile(path)
-        else com.github.kornilova203.matlab.execution.console.MatlabConsoleCode.runCode(MatlabCommandLineState.sectionCode(path, section))
+        else com.github.kornilova203.matlab.execution.console.MatlabConsoleCode.runCode(code!!)
         com.github.kornilova203.matlab.execution.console.MatlabConsoleManager.getInstance(configuration.project)
-            .run(command, configuration.getInterpreterPath())
+            .run(command, configuration.getInterpreterPath(), code)
         // The output is in the MATLAB tool window, not in a Run tab
         return null
     }

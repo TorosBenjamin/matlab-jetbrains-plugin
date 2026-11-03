@@ -42,6 +42,13 @@ class MatlabConsoleTest : BasePlatformTestCase() {
         assertEquals("for i = 1:3\n    disp(i)\nend\n", script.readText())
     }
 
+    fun testCallsClc() {
+        for (code in listOf("clc", "clc;", "  clc ;clear", "clear; clc", "clc, close all", "clc()", "clc % clear", "x = 1;\nclc\n"))
+            assertTrue(code, MatlabConsoleSession.callsClc(code))
+        for (code in listOf("% clc", "disp('clc')", "s.clc", "clc = 3", "myclc", "clcx", "x = 1"))
+            assertFalse(code, MatlabConsoleSession.callsClc(code))
+    }
+
     // How each MATLAB is started
 
     fun testKinds() {
@@ -148,6 +155,9 @@ class MatlabConsoleTest : BasePlatformTestCase() {
         val text = output(session)
         session.send("disp('hello')")
         waitFor(text, "disp('hello')")
+        // Typed input (as the console sends it) still reaches the process
+        session.processHandler.processInput!!.apply { write("typed clc\n".toByteArray()); flush() }
+        waitFor(text, "typed clc")
         assertTrue(session.isAlive)
     }
 
