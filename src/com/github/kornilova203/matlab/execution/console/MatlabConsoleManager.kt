@@ -83,6 +83,9 @@ class MatlabConsoleManager(private val project: Project) : Disposable {
         return session
     }
 
+    /** A running session that waits at its prompt, to ask things of (class members for completion). */
+    fun idleSession(): MatlabConsoleSession? = sessions.firstOrNull { it.isAlive && it.isIdle }
+
     /** Pause on Errors changed: every session gets it. */
     fun breakpointsChanged() = sessions.forEach { it.breakpointsChanged() }
 
@@ -156,13 +159,29 @@ object MatlabConsoleCode {
     fun evalQuery(id: Int, expression: String): String =
         hiddenCall("ide_eval__('$id', '${quote(expression.replace('\n', ' '))}')", "e$id")
 
-    /** Calls a helper function, putting their folder on the path if needed; on error the answer is empty. */
-    private fun hiddenCall(call: String, tag: String): String {
+    /** Lists the public properties and methods of the classes [names], under `cls<id>` (see [CLASS_FUNCTION]). */
+    fun classQuery(id: Int, names: List<String>): String = hiddenCall("ide_class__('$id', ${cellOf(names)})", "cls$id")
+
+    /** The same for `matlab -batch`: puts the helpers' folder on the path first. */
+    fun classBatchCommand(names: List<String>): String {
         val directory = scriptDirectory
+        writeHelpers(directory)
+        return "addpath('${quote(directory.path)}'); ide_class__('0', ${cellOf(names)})"
+    }
+
+    private fun cellOf(names: List<String>) = names.joinToString(", ", "{", "}") { "'" + quote(it) + "'" }
+
+    private fun writeHelpers(directory: File) {
         for ((name, code) in HELPERS) {
             val file = File(directory, "$name.m")
             if (!file.isFile) file.writeText(code)
         }
+    }
+
+    /** Calls a helper function, putting their folder on the path if needed; on error the answer is empty. */
+    private fun hiddenCall(call: String, tag: String): String {
+        val directory = scriptDirectory
+        writeHelpers(directory)
         return "try, $call; catch, try, addpath('${quote(directory.path)}'); $call; " +
                 "catch, fprintf('%s$tag\\n%s', char(2), char(4)); end, end"
     }
@@ -324,12 +343,55 @@ object MatlabConsoleCode {
         end
         """.trimIndent() + "\n"
 
+    /**
+     * Describes classes for completion: for each name a line `c<tab>name`, then `p<tab>property` and
+     * `m<tab>method` for what's public and not hidden (not what every handle class has), or `x` if it isn't a class.
+     */
+    private val CLASS_FUNCTION = """
+        function ide_class__(id, names)
+        % Written by the IDE's MATLAB plugin: lists the members of classes, for completion
+        out = '';
+        for k = 1:numel(names)
+            out = [out, 'c', char(9), names{k}, char(10)]; %#ok<AGROW>
+            try
+                mc = meta.class.fromName(names{k});
+                if isempty(mc)
+                    out = [out, 'x', char(9), char(10)]; %#ok<AGROW>
+                    continue
+                end
+                props = mc.PropertyList;
+                for i = 1:numel(props)
+                    p = props(i);
+                    if ~p.Hidden && ischar(p.GetAccess) && strcmp(p.GetAccess, 'public')
+                        out = [out, 'p', char(9), p.Name, char(10)]; %#ok<AGROW>
+                    end
+                end
+                short = regexprep(mc.Name, '.*\.', '');
+                meths = mc.MethodList;
+                for i = 1:numel(meths)
+                    m = meths(i);
+                    owner = m.DefiningClass.Name;
+                    if m.Hidden || ~ischar(m.Access) || ~strcmp(m.Access, 'public') || strcmp(m.Name, short) || ...
+                            strcmp(owner, 'handle') || strncmp(owner, 'matlab.mixin.', 13)
+                        continue
+                    end
+                    out = [out, 'm', char(9), m.Name, char(10)]; %#ok<AGROW>
+                end
+            catch
+                out = [out, 'x', char(9), char(10)]; %#ok<AGROW>
+            end
+        end
+        fprintf('%scls%s\n%s%s', char(2), id, out, char(4));
+        end
+        """.trimIndent() + "\n"
+
     const val WORKSPACE_TAG = "ws"
     const val BREAKPOINTS_TAG = "bp"
     const val STACK_TAG = "st"
     private val HELPERS by lazy {
         listOf("ide_workspace__" to WORKSPACE_FUNCTION, "ide_members__" to MEMBERS_FUNCTION,
-            "ide_breakpoints__" to BREAKPOINTS_FUNCTION, "ide_stack__" to STACK_FUNCTION, "ide_eval__" to EVAL_FUNCTION)
+            "ide_breakpoints__" to BREAKPOINTS_FUNCTION, "ide_stack__" to STACK_FUNCTION, "ide_eval__" to EVAL_FUNCTION,
+            "ide_class__" to CLASS_FUNCTION)
     }
 }
 

@@ -227,6 +227,13 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         return ask("e$id", MatlabConsoleCode.evalQuery(id, expression))?.orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
     }
 
+    /** Asks MATLAB about classes (see [MatlabConsoleCode.classQuery]); null if MATLAB is busy. */
+    fun describeClasses(names: List<String>): java.util.concurrent.CompletableFuture<String>? {
+        if (!isAlive || !isIdle || kind == Kind.OCTAVE || kind == Kind.OTHER) return null
+        val id = queryIds.incrementAndGet()
+        return ask("cls$id", MatlabConsoleCode.classQuery(id, names))?.orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+    }
+
     /** Sends a hidden [query]; its answer (under [tag]) completes the future. Null if it couldn't be sent. */
     private fun ask(tag: String, query: String): java.util.concurrent.CompletableFuture<String>? {
         val answer = java.util.concurrent.CompletableFuture<String>()
