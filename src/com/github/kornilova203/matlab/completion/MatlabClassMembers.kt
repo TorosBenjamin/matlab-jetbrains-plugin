@@ -80,6 +80,7 @@ object MatlabClassMembers {
 
     @TestOnly
     fun putForTests(name: String, info: MatlabClassInfo?) {
+        refreshInstallation()
         known[name] = Optional.ofNullable(info)
     }
 
