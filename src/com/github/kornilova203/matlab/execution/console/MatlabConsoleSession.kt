@@ -3,6 +3,9 @@ package com.github.kornilova203.matlab.execution.console
 import com.github.kornilova203.matlab.settings.MatlabInstallations
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.github.kornilova203.matlab.MatlabLanguage
+import com.intellij.execution.console.BaseConsoleExecuteActionHandler
+import com.intellij.execution.console.ConsoleExecuteAction
+import com.intellij.execution.console.ConsoleHistoryController
 import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.console.LanguageConsoleView
@@ -91,7 +94,14 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
 
     init {
         Disposer.register(this, console)
-        LanguageConsoleBuilder.registerExecuteAction(console, { typed(it) }, "matlab", null) { isAlive }
+        // Enter runs the input; the command is shown in the output by typed(), in MATLAB's colors
+        val handler = object : BaseConsoleExecuteActionHandler(false) {
+            override fun execute(text: String, console: LanguageConsoleView) = typed(text)
+        }
+        handler.setAddCurrentToHistory(false)
+        val execute = ConsoleExecuteAction(console, handler) { isAlive }
+        execute.registerCustomShortcutSet(execute.shortcutSet, console.consoleEditor.component)
+        ConsoleHistoryController(LanguageConsoleBuilder.MyConsoleRootType("matlab"), null, console).install()
         // MATLAB's own prompts are taken out of the output; the input line shows the current one
         console.prompt = currentPrompt
         // Like MATLAB's command window: no prompt and no typing while MATLAB is busy, starting up included
@@ -239,15 +249,14 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
      */
     fun send(command: String, code: String? = null) {
         if (callsClc(command) || code != null && callsClc(code)) clearConsole()
-        console.print(currentPrompt, console.promptAttributes)
-        console.print(command + "\n", ConsoleViewContentType.USER_INPUT)
+        echo(command)
         // A run gets the breakpoints again: MATLAB may have dropped them when the file changed
         execute(command, syncBreakpoints = code != null)
     }
 
-    /** What the user entered in the console's input (already shown in the output). */
+    /** What the user entered in the console's input. */
     private fun typed(text: String) {
-        if (callsClc(text)) clearConsole()
+        if (callsClc(text)) clearConsole() else echo(text.trimEnd())
         val lines = text.lines().dropLastWhile { it.isBlank() }
         // Several lines (a loop, say) run as a script: the Windows engine takes one line per command
         execute(if (lines.size <= 1) text.trim() else MatlabConsoleCode.runCode(text))
@@ -313,6 +322,21 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         }
         val text = answer.getNow(null) ?: return emptyList()
         return MatlabMember.parse(text).also { memberCache[expression] = it }
+    }
+
+    /** Shows [command] after the prompt, highlighted like in the editor (keywords, strings, numbers, comments). */
+    private fun echo(command: String) {
+        console.print(currentPrompt, console.promptAttributes)
+        val lexer = HIGHLIGHTER.highlightingLexer
+        lexer.start(command)
+        while (lexer.tokenType != null) {
+            val key = HIGHLIGHTER.getTokenHighlights(lexer.tokenType).lastOrNull()
+            val type = if (key == null) ConsoleViewContentType.USER_INPUT
+            else CONTENT_TYPES.computeIfAbsent(key) { ConsoleViewContentType("MATLAB_CONSOLE_" + it.externalName, it) }
+            console.print(command.substring(lexer.tokenStart, lexer.tokenEnd), type)
+            lexer.advance()
+        }
+        console.print("\n", ConsoleViewContentType.USER_INPUT)
     }
 
     /**
@@ -389,6 +413,8 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
     }
 
     companion object {
+        private val HIGHLIGHTER = com.github.kornilova203.matlab.MatlabSyntaxHighlighter()
+        private val CONTENT_TYPES = java.util.concurrent.ConcurrentHashMap<com.intellij.openapi.editor.colors.TextAttributesKey, ConsoleViewContentType>()
         private val CLC = Regex("""(?<![\w.'"])clc\s*(\(\s*\))?\s*(?=[;,]|$)""")
 
         /** Whether [code] calls `clc` as a statement (not in a comment, not `x.clc` or `clc = 1`). */

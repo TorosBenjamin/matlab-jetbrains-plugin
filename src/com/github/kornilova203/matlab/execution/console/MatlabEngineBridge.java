@@ -33,7 +33,7 @@ public final class MatlabEngineBridge {
     public static final String PROMPT = ">> ";
     public static final String DEBUG_PROMPT = "K>> ";
     /** Prints 1 when MATLAB is paused in its debugger. */
-    static final String PROBE = "disp(double(feature('IsDebugMode')))";
+    public static final String PROBE = "disp(double(feature('IsDebugMode')))";
     static final long PROBE_AGAIN_MS = 300;
     static final String ENGINE_CLASS = "com.mathworks.engine.MatlabEngine";
 
