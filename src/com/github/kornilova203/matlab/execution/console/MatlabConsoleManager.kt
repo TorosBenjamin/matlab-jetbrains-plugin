@@ -355,9 +355,19 @@ class MatlabConsolePanel(private val session: MatlabConsoleSession) : SimpleTool
     }
 
     private inner class InterruptAction : AnAction("Interrupt", "Stop the running command (Ctrl+C)", AllIcons.Actions.Suspend), DumbAware {
+        init {
+            // Ctrl+C in the console, as in MATLAB; with text selected it copies (this action is off then)
+            registerCustomShortcutSet(com.intellij.openapi.actionSystem.CustomShortcutSet(
+                javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_DOWN_MASK)),
+                session.console.component)
+        }
+
         override fun getActionUpdateThread() = com.intellij.openapi.actionSystem.ActionUpdateThread.EDT
         override fun update(e: AnActionEvent) {
-            e.presentation.isEnabled = session.isAlive
+            val console = session.console
+            val selected = console.historyViewer.selectionModel.hasSelection() || console.consoleEditor.selectionModel.hasSelection()
+            // Only while MATLAB is busy: at its prompt there's nothing to stop
+            e.presentation.isEnabled = session.isAlive && !session.isIdle && !selected
         }
 
         override fun actionPerformed(e: AnActionEvent) {

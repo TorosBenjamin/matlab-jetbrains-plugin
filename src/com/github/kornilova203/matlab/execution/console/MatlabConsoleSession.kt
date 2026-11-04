@@ -181,8 +181,8 @@ class MatlabConsoleSession(val project: Project, val name: String, val interpret
         if (kind == Kind.MATLAB_ENGINE && breakpoints.isNotEmpty() && !warnedAboutEngineBreakpoints) {
             warnedAboutEngineBreakpoints = true
             NotificationGroupManager.getInstance().getNotificationGroup("MATLAB").createNotification(
-                "Breakpoints on Windows are experimental: MATLAB's Java engine may not stop in the IDE. " +
-                        "If MATLAB stops responding at a breakpoint, press Interrupt or close the console tab.",
+                "Breakpoints on Windows are experimental (MATLAB's Java engine has no debugger prompt). " +
+                        "If a run stops responding at a breakpoint and the debugger doesn't open, press Interrupt (Ctrl+C).",
                 NotificationType.WARNING).notify(project)
         }
         try {
