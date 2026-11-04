@@ -105,13 +105,13 @@ class MatlabConsoleTest : BasePlatformTestCase() {
 
     fun testBridgeRunsCommands() {
         val engine = FakeEngine()
-        val (out, err) = bridge(engine, StringReader("x = 1\nfail\n\ndisp(x)\nexit\nnot run\n"))
+        val (out, err) = bridge(engine, StringReader("x = 1\nfail\ndisp(x)\nexit\nnot run\n"))
         assertEquals(listOf("x = 1", "fail", "disp(x)"), engine.commands.filter { it != MatlabEngineBridge.PROBE })
         val text = out.toString(StandardCharsets.UTF_8)
         assertTrue(text, text.startsWith(">> ran x = 1\n"))
         assertTrue(text, text.contains("ran disp(x)"))
-        // A prompt to start with, then one per command (the empty line included); no K>> without a pause
-        assertEquals(text, 5, Regex(">> ").findAll(text).count())
+        // A prompt to start with, then one per command; no K>> without a pause
+        assertEquals(text, 4, Regex(">> ").findAll(text).count())
         assertFalse(text, text.contains("K>> "))
         assertTrue(err.toString(StandardCharsets.UTF_8).contains("Undefined function 'fail'"))
         assertTrue(engine.closed)

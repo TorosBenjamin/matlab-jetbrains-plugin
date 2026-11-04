@@ -152,18 +152,33 @@ public final class MatlabEngineBridge {
         } catch (InterruptedException e) {
             return;
         }
-        boolean oldest;
+        int finished = 0;
+        boolean whilePaused = false;
         synchronized (lock) {
-            oldest = active.peekFirst() == future;
-            active.remove(future);
+            // Already counted by the waiter of an older command
+            if (!active.contains(future)) return;
+            boolean olderRunning = false;
+            for (Future<?> older : active) {
+                if (older == future) break;
+                if (!older.isDone()) {
+                    olderRunning = true;
+                    break;
+                }
+            }
+            if (olderRunning) {
+                // Ran while an older command is still going: MATLAB was paused, and may still be (dbstep) or not (dbcont)
+                active.remove(future);
+                whilePaused = true;
+            } else {
+                // Finished as usual (or MATLAB left the debugger and the code ran to its end), with any done after it
+                while (!active.isEmpty() && active.peekFirst().isDone()) {
+                    active.pollFirst();
+                    finished++;
+                }
+            }
         }
-        if (oldest) {
-            // Finished as usual (or MATLAB left the debugger and the code ran to its end)
-            print(PROMPT);
-        } else {
-            // Ran while an older command is still going: MATLAB was paused, and may still be (dbstep) or not (dbcont)
-            probe();
-        }
+        if (whilePaused) probe();
+        for (int i = 0; i < finished; i++) print(PROMPT);
     }
 
     /**
