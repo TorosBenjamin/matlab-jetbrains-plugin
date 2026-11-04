@@ -105,12 +105,76 @@ class MatlabConsoleTest : BasePlatformTestCase() {
 
     fun testBridgeRunsCommands() {
         val engine = FakeEngine()
-        val (out, err) = bridge(engine, StringReader("x = 1\nfail\n\ndisp(x)\nexit\nnot run\n"))
-        assertEquals(listOf("x = 1", "fail", "disp(x)"), engine.commands)
+        val (out, err) = bridge(engine, StringReader("x = 1\nfail\ndisp(x)\nexit\nnot run\n"))
+        assertEquals(listOf("x = 1", "fail", "disp(x)"), engine.commands.filter { it != MatlabEngineBridge.PROBE })
         val text = out.toString(StandardCharsets.UTF_8)
-        assertTrue(text, text.startsWith(">> ran x = 1\n>> "))
+        assertTrue(text, text.startsWith(">> ran x = 1\n"))
         assertTrue(text, text.contains("ran disp(x)"))
+        // A prompt to start with, then one per command; no K>> without a pause
+        assertEquals(text, 4, Regex(">> ").findAll(text).count())
+        assertFalse(text, text.contains("K>> "))
         assertTrue(err.toString(StandardCharsets.UTF_8).contains("Undefined function 'fail'"))
+        assertTrue(engine.closed)
+    }
+
+    /** Stands in for MATLAB stopping at a breakpoint: "run" doesn't finish until dbcont, and the probe says so. */
+    class PausingEngine {
+        private val run = CompletableFuture<Any>()
+        @Volatile var paused = false
+        @Volatile var closed = false
+
+        fun evalAsync(command: String, output: Writer, error: Writer): Future<*> {
+            when (command) {
+                "run" -> {
+                    paused = true
+                    return run
+                }
+                MatlabEngineBridge.PROBE -> output.write(if (paused) "1\n" else "0\n")
+                "dbstep" -> output.write("2   y = 2;\n")
+                "dbcont" -> {
+                    paused = false
+                    run.complete(null)
+                }
+                else -> output.write("ran $command\n")
+            }
+            output.flush()
+            return CompletableFuture.completedFuture(null)
+        }
+
+        fun close() {
+            closed = true
+        }
+    }
+
+    fun testBridgeNoticesBreakpoints() {
+        val engine = PausingEngine()
+        val input = PipedWriter()
+        val reader = PipedReader(input)
+        val out = ByteArrayOutputStream()
+        val result = Executors.newSingleThreadExecutor().submit {
+            MatlabEngineBridge(engine, reader, PrintStream(out, true, "UTF-8"), PrintStream(ByteArrayOutputStream(), true, "UTF-8")).run()
+        }
+        fun text() = out.toString(StandardCharsets.UTF_8)
+        fun waitFor(what: String, condition: () -> Boolean) {
+            val deadline = System.currentTimeMillis() + 10_000
+            while (!condition() && System.currentTimeMillis() < deadline) Thread.sleep(20)
+            assertTrue(what + ": " + text(), condition())
+        }
+        fun send(line: String) {
+            input.write(line + "\n")
+            input.flush()
+        }
+        send("run")
+        waitFor("stopped") { text().endsWith("K>> ") }
+        // Commands at K>> run where MATLAB stopped, and get a K>> each
+        send("dbstep")
+        waitFor("stepped") { text().contains("2   y = 2;\nK>> ") }
+        send("whos")
+        waitFor("answered") { text().contains("ran whos\nK>> ") }
+        send("dbcont")
+        waitFor("finished") { text().endsWith(">> ") && !text().endsWith("K>> ") }
+        send("exit")
+        result.get(30, TimeUnit.SECONDS)
         assertTrue(engine.closed)
     }
 
@@ -127,6 +191,7 @@ class MatlabConsoleTest : BasePlatformTestCase() {
         val (out, err) = result.get(30, TimeUnit.SECONDS)
         assertTrue(err.toString(StandardCharsets.UTF_8).contains("Interrupted"))
         assertTrue(out.toString(StandardCharsets.UTF_8).contains("ran after"))
+        assertFalse(out.toString(StandardCharsets.UTF_8).contains("K>> "))
         assertTrue(engine.closed)
     }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+- **Completion of MATLAB's own classes**: after `p.` where `p = inputParser`, `containers.Map(...)`, `figure`, `catch ME` and so on, completion offers the class's properties and methods. They come from MATLAB itself (`meta.class.fromName`) for the installed version, asked once per class in the background and remembered; without MATLAB, common classes still complete
+- **Windows**: breakpoints should now open the debugger. The console notices when MATLAB's Java engine is paused at a breakpoint instead of waiting for the run to finish
+- **Console**: Ctrl+C interrupts a running command (it still copies when text is selected); commands keep their colors in the output
+
 ## 1.4.0
 
 - **Breakpoints**: click the gutter of a `.m` file. As in MATLAB they're always on, with no separate debug run: the console's MATLAB stops at them whenever the code runs. Conditions (`x > 5`) work, and **Pause on Errors** in the console toolbar stops where an error isn't caught (`dbstop if error`)
