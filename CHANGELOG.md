@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.2
+
+- **Performance**: much less work when a project opens, while editing and in Analyze Code before a commit. Package folders are no longer looked up again after every file change in the IDE, MATLAB's installation isn't searched for on every mlint run, names that are local variables don't query the project's indexes, and mlint isn't run again on unchanged files
+- Usage counts are no longer shown above properties (they were slow to count in large projects); functions and classes still have them
+
 ## 1.4.1
 
 - **Completion of MATLAB's own classes**: after `p.` where `p = inputParser`, `containers.Map(...)`, `figure`, `catch ME` and so on, completion offers the class's properties and methods. They come from MATLAB itself (`meta.class.fromName`) for the installed version, asked once per class in the background and remembered; without MATLAB, common classes still complete

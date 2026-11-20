@@ -34,6 +34,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.4.2</p>
+    <ul>
+      <li>Performance: less CPU when opening a project, while editing and in Analyze Code before a commit</li>
+    </ul>
     <p>1.4.1</p>
     <ul>
       <li>Completion of MATLAB's own classes (inputParser, containers.Map, figures, ...), read from MATLAB</li>
