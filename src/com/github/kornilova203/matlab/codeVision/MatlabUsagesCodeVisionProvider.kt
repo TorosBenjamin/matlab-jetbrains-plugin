@@ -15,12 +15,15 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import java.util.concurrent.atomic.AtomicInteger
 
-/** "3 usages" above functions, classes and properties; clicking it shows the usages. */
+/**
+ * "3 usages" above functions and classes; clicking it shows the usages. Not on properties: their names are
+ * often common words (Value, Data, Name), and counting means resolving every `x.Value` in the project.
+ */
 class MatlabUsagesCodeVisionProvider : ReferencesCodeVisionProvider() {
     override fun acceptsFile(file: PsiFile): Boolean = file is MatlabFile
 
     override fun acceptsElement(element: PsiElement): Boolean =
-        element is MatlabFunctionDeclaration || element is MatlabClassDeclaration || element is MatlabProperty
+        element is MatlabFunctionDeclaration || element is MatlabClassDeclaration
 
     override fun getHint(element: PsiElement, file: PsiFile): String? = usagesText(countUsages(element))
 

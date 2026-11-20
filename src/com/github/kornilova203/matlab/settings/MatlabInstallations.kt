@@ -21,7 +21,21 @@ object MatlabInstallations {
         configurationPath?.takeIf { it.isNotBlank() }
             ?: MatlabSettings.getInstance().matlabPath?.takeIf { it.isNotBlank() }
             ?: PropertiesComponent.getInstance().getValue(LEGACY_INTERPRETER_KEY)?.takeIf { it.isNotBlank() }
-            ?: detector().firstOrNull()
+            ?: detected()
+
+    /**
+     * The first installation detected, looked up again at most every minute: detecting scans PATH and the
+     * install folders, and the interpreter is asked for often (each mlint run, the MATLAB path's roots).
+     */
+    private fun detected(): String? {
+        val now = System.currentTimeMillis()
+        detectedCache?.let { (at, value) -> if (now - at < DETECT_AGAIN_MS) return value }
+        return detector().firstOrNull().also { detectedCache = now to it }
+    }
+
+    @Volatile
+    private var detectedCache: Pair<Long, String?>? = null
+    private const val DETECT_AGAIN_MS = 60_000L
 
     private val mlintCache = java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<String>>()
 
@@ -90,6 +104,10 @@ object MatlabInstallations {
     @TestOnly
     fun setDetectorForTests(detect: () -> List<String>, disposable: com.intellij.openapi.Disposable) {
         detector = detect
-        com.intellij.openapi.util.Disposer.register(disposable) { detector = ::detect }
+        detectedCache = null
+        com.intellij.openapi.util.Disposer.register(disposable) {
+            detector = ::detect
+            detectedCache = null
+        }
     }
 }

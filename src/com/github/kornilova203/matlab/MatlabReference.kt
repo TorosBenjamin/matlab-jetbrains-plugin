@@ -41,9 +41,12 @@ class MatlabReference(myElement: MatlabRefExpr) : PsiPolyVariantReferenceBase<Ma
         val processor = MatlabResolvingScopeProcessor(this)
         val containingFile = myElement.containingFile
         PsiTreeUtil.treeWalkUp(processor, myElement, containingFile, ResolveState.initial())
-        // The project's own files first, then the MATLAB path (only the first declaration found is used)
+        // The project's own files first, then the MATLAB path (only the first declaration found is used).
+        // A variable or local function found in the file wins over those, so then they aren't looked up.
         val project = myElement.project
-        for (scope in listOf(GlobalSearchScope.projectScope(project), ProjectScope.getLibrariesScope(project))) {
+        val scopes = if (processor.foundOtherDeclaration()) emptyList()
+        else listOf(GlobalSearchScope.projectScope(project), ProjectScope.getLibrariesScope(project))
+        for (scope in scopes) {
             resolveIndex(processor, MatlabFunctionDeclarationIndex.KEY, MatlabFunctionDeclaration::class.java, scope)
             resolveIndex(processor, MatlabClassDeclarationIndex.KEY, MatlabClassDeclaration::class.java, scope)
         }

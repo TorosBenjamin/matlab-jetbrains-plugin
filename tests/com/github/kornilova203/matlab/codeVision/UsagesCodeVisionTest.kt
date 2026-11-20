@@ -30,7 +30,9 @@ class UsagesCodeVisionTest : BasePlatformTestCase() {
             return provider.getHint(element, file)
         }
         assertEquals("2 usages", hintFor("area"))
-        assertEquals("2 usages", hintFor("Width"))
+        // No hints on properties: counting them is too slow in big projects
+        val width = PsiTreeUtil.findChildrenOfType(file, MatlabProperty::class.java).first()
+        assertFalse(provider.acceptsElement(width))
         assertEquals("no usages", hintFor("unused"))
     }
 

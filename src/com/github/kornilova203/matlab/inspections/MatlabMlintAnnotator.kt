@@ -45,6 +45,13 @@ class MatlabMlintAnnotator : ExternalAnnotator<MatlabMlintAnnotator.Input, List<
     }
 
     override fun doAnnotate(input: Input): List<Problem> {
+        // The same text checked again (another highlighting pass, Analyze Code before a commit): the last answer
+        val key = input.mlint + "\u0000" + input.fileName + "\u0000" + input.text.hashCode() + "\u0000" + input.text.length
+        RESULTS.get(key)?.let { return it }
+        return check(input).also { RESULTS.put(key, it) }
+    }
+
+    private fun check(input: Input): List<Problem> {
         val dir = FileUtil.createTempDirectory("matlab-mlint", null, true)
         try {
             val file = File(dir, input.fileName)
@@ -118,6 +125,9 @@ class MatlabMlintAnnotator : ExternalAnnotator<MatlabMlintAnnotator.Input, List<
     }
 
     companion object {
+        /** mlint's answers for the files' recent texts: it's a separate program, so each run costs a process. */
+        private val RESULTS = com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap<String, List<Problem>>()
+
         private val LOG = logger<MatlabMlintAnnotator>()
         private const val TIMEOUT_MS = 15_000
 

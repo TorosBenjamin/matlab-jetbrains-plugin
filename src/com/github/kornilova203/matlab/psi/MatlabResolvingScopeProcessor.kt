@@ -38,6 +38,12 @@ class MatlabResolvingScopeProcessor(private val myReference: MatlabReference) : 
     override fun handleEvent(event: PsiScopeProcessor.Event, associated: Any?) {
     }
 
+    /**
+     * A declaration was found that the index's functions and classes can't replace (one other than the
+     * reference itself: a first assignment `x = ...` may still turn out to name a function).
+     */
+    fun foundOtherDeclaration(): Boolean = declaration != null && !isResolvedToItself()
+
     private fun isResolvedToItself(): Boolean {
         return declaration?.identifyingElement == myReference.element.identifier()
     }
