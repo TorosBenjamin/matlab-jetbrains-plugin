@@ -231,4 +231,8 @@
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
     </actions>
+    <applicationListeners>
+        <listener class="com.github.kornilova203.matlab.psi.MatlabPackageFoldersListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
 </idea-plugin>

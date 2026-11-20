@@ -37,6 +37,9 @@ object MatlabPackages {
     }
 
     /**
+     * Recomputed only when package folders may have changed ([MatlabPackageFolders]), not on every file change:
+     * this walks the whole project.
+     *
      * All package folders in the project and on the MATLAB path by package name; one package may span
      * several folders. The project's folders come first.
      */
@@ -51,7 +54,7 @@ object MatlabPackages {
                 VfsUtilCore.iterateChildrenRecursively(root, { it.isDirectory }) { file -> add(file); true }
             }
             CachedValueProvider.Result.create(map.mapValues { it.value.toList() },
-                VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS, ProjectRootModificationTracker.getInstance(project))
+                MatlabPackageFolders, ProjectRootModificationTracker.getInstance(project))
         }
 
     fun isPackage(project: Project, name: String): Boolean = index(project).containsKey(name)
@@ -76,7 +79,7 @@ object MatlabPackages {
                 }
             }
             CachedValueProvider.Result.create(map.mapValues { it.value.sorted() },
-                VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS, ProjectRootModificationTracker.getInstance(project))
+                MatlabPackageFolders, ProjectRootModificationTracker.getInstance(project))
         }
     fun rootPackages(project: Project): Set<String> = index(project).keys.map { it.substringBefore('.') }.toSet()
 
