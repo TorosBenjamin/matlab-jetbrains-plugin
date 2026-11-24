@@ -35,7 +35,8 @@ class MatlabKeywordCompletionContributor : CompletionContributor() {
                         }
                     }, 1.0)
 
-        val M = psiElement().withLanguage(MatlabLanguage.INSTANCE)
+        /** MATLAB code: not inside a comment, where names aren't completed. */
+        val M = psiElement().withLanguage(MatlabLanguage.INSTANCE).andNot(psiElement().inside(com.intellij.psi.PsiComment::class.java))
         private val IDENT = psiElement(MatlabTypes.IDENTIFIER).withParent(MatlabRefExpr::class.java)
         private val AT_TOP_LEVEL = and(M, IDENT.withSuperParent(2, MatlabFile::class.java))
         private val IN_BLOCK = and(M, IDENT.withSuperParent(2, MatlabBlock::class.java))

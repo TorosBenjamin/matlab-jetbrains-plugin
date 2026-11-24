@@ -17,6 +17,12 @@ abstract class MatlabQualifiedExprMixin(node: ASTNode) : MatlabBinaryExprImpl(no
         if (lastParent != this.right) {
             return true
         }
+        // Only the name after the dot is a member: in obj.method(a, b) the arguments are the caller's names
+        val right = this.right
+        val member = if (right is MatlabFunctionExpr) right.expr else right
+        if (member == null || !com.intellij.psi.util.PsiTreeUtil.isAncestor(member, place, false)) {
+            return true
+        }
         // geometry.Point, geometry.shapes.Circle: members of a package
         MatlabPackages.dottedName(firstChild)?.takeIf { MatlabPackages.isPackage(project, it) }?.let { pkg ->
             for (member in MatlabPackages.members(project, pkg)) {

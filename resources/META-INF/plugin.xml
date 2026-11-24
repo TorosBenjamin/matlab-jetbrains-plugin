@@ -34,6 +34,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.4.3</p>
+    <ul>
+      <li>Names in the arguments of obj.method(...) and pkg.func(...) resolve to the caller's variables</li>
+      <li>No completion popping up in comments and strings; Enter in a block of % comments continues it</li>
+    </ul>
     <p>1.4.2</p>
     <ul>
       <li>Performance: less CPU when opening a project, while editing and in Analyze Code before a commit</li>
@@ -131,6 +136,7 @@
                         implementationClass="com.github.kornilova203.matlab.editor.actions.MatlabCommentHandler"/>
         <quoteHandler fileType="Matlab" className="com.github.kornilova203.matlab.editor.actions.MatlabQuoteHandler"/>
 
+        <completion.confidence language="Matlab" implementationClass="com.github.kornilova203.matlab.completion.MatlabCompletionConfidence"/>
         <completion.contributor language="Matlab" order="first"
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabContextCompletionContributor"/>
         <completion.contributor language="Matlab"
@@ -174,6 +180,7 @@
         <inlineActionHandler implementation="com.github.kornilova203.matlab.refactoring.MatlabInlineVariableHandler"/>
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterHandler"/>
+        <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterInCommentHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEndInserter"/>
         <codeInsight.parameterInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.editor.MatlabParameterInfoHandler"/>
         <codeInsight.typeInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabTypeProvider"/>
