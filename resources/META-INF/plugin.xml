@@ -131,6 +131,7 @@
                         implementationClass="com.github.kornilova203.matlab.editor.actions.MatlabCommentHandler"/>
         <quoteHandler fileType="Matlab" className="com.github.kornilova203.matlab.editor.actions.MatlabQuoteHandler"/>
 
+        <completion.confidence language="Matlab" implementationClass="com.github.kornilova203.matlab.completion.MatlabCompletionConfidence"/>
         <completion.contributor language="Matlab" order="first"
                                 implementationClass="com.github.kornilova203.matlab.completion.MatlabContextCompletionContributor"/>
         <completion.contributor language="Matlab"
