@@ -4,6 +4,7 @@
 
 - Names inside the brackets of a method or package call (`child.align(key, parent)`, `pkg.func(x)`) resolve to the caller's variables; they were looked up among the class's or package's members, so they weren't highlighted and the variable showed as unused
 - No completion popping up while typing in comments and strings
+- Enter in a block of `%` comments continues it with `% ` on the next line (and in the middle of a comment keeps the rest a comment); an empty `%` line ends the block
 
 ## 1.4.2
 

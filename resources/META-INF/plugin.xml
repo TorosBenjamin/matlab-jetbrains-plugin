@@ -37,7 +37,7 @@
     <p>1.4.3</p>
     <ul>
       <li>Names in the arguments of obj.method(...) and pkg.func(...) resolve to the caller's variables</li>
-      <li>No completion popping up in comments and strings</li>
+      <li>No completion popping up in comments and strings; Enter in a block of % comments continues it</li>
     </ul>
     <p>1.4.2</p>
     <ul>
