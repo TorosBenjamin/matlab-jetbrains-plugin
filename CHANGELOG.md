@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.3
+
+- Names inside the brackets of a method or package call (`child.align(key, parent)`, `pkg.func(x)`) resolve to the caller's variables; they were looked up among the class's or package's members, so they weren't highlighted and the variable showed as unused
+- No completion popping up while typing in comments and strings
+
 ## 1.4.2
 
 - **Performance**: much less work when a project opens, while editing and in Analyze Code before a commit. Package folders are no longer looked up again after every file change in the IDE, MATLAB's installation isn't searched for on every mlint run, names that are local variables don't query the project's indexes, and mlint isn't run again on unchanged files

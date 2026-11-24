@@ -34,6 +34,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <p>1.4.3</p>
+    <ul>
+      <li>Names in the arguments of obj.method(...) and pkg.func(...) resolve to the caller's variables</li>
+      <li>No completion popping up in comments and strings</li>
+    </ul>
     <p>1.4.2</p>
     <ul>
       <li>Performance: less CPU when opening a project, while editing and in Analyze Code before a commit</li>
