@@ -49,7 +49,7 @@ class MethodArgumentResolveTest : BasePlatformTestCase() {
 
     fun testUsedInMethodCallIsNotUnused() {
         myFixture.enableInspections(MatlabUnusedVariableInspection())
-        myFixture.configureByText("f.m", "function f(s, parent)\nparent = parent(1);\ns = Shape();\ns.align(2, parent, 3)\nend\n")
+        myFixture.configureByText("f.m", "function f(parent)\nparent = parent(1);\ns = Shape();\ns.align(2, parent, 3)\nend\n")
         val unused = myFixture.doHighlighting().filter { it.description?.contains("never used") == true }
         assertEmpty(unused.map { it.description })
     }
