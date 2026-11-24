@@ -180,6 +180,7 @@
         <inlineActionHandler implementation="com.github.kornilova203.matlab.refactoring.MatlabInlineVariableHandler"/>
         <typedHandler implementation="com.github.kornilova203.matlab.editor.actions.MatlabTypedHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterHandler"/>
+        <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEnterInCommentHandler"/>
         <enterHandlerDelegate implementation="com.github.kornilova203.matlab.editor.actions.MatlabEndInserter"/>
         <codeInsight.parameterInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.editor.MatlabParameterInfoHandler"/>
         <codeInsight.typeInfo language="Matlab" implementationClass="com.github.kornilova203.matlab.MatlabTypeProvider"/>
